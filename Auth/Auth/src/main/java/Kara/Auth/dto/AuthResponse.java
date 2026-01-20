@@ -1,6 +1,5 @@
 package Kara.Auth.dto;
 
-import Kara.Auth.entities.RefreshToken;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -10,5 +9,5 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class AuthResponse {
     private String token;
-    private RefreshToken refresh_token;
+    private String refresh_token;
 }

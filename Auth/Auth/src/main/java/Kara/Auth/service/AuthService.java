@@ -15,10 +15,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
+@org.springframework.transaction.annotation.Transactional
 public class AuthService {
     private final UserCredentialRepository userRepo;
     private final JwtProvider jwtProvider;
@@ -32,19 +32,16 @@ public class AuthService {
             throw new AuthException("User already exists", HttpStatus.CONFLICT);
 
         }
-
         UserCredentials userCredentials = new UserCredentials();
         userCredentials.setEmail(registerRequest.getEmail());
         userCredentials.setPassword(
-                bCryptPasswordEncoder.encode(registerRequest.getPassword())
-        );
+                bCryptPasswordEncoder.encode(registerRequest.getPassword()));
         userCredentials.setRole(Role.USER);
         userCredentials.setEnabled(true);
 
-        UserCredentials dbUser = userRepo.save(userCredentials);
+        UserCredentials dbUser = userRepo.saveAndFlush(userCredentials);
         return generateTokens(dbUser);
     }
-
 
     public AuthResponse login(LoginRequest loginRequest) {
         UserCredentials userCredentials = userRepo
@@ -60,21 +57,22 @@ public class AuthService {
             throw new AuthException("Wrong password", HttpStatus.UNAUTHORIZED);
         }
         refreshTokenRepository.deleteByUser(userCredentials);
+        refreshTokenRepository.flush(); // that make the delete operation instantly so
+        // I dont get an error while trying to create another token
         return generateTokens(userCredentials);
     }
-
 
     public AuthResponse refreshToken(String token) {
         RefreshToken refreshToken = refreshTokenService.verifyExpiration(token);
         UserCredentials credentials = refreshToken.getUser();
         refreshTokenRepository.deleteByUser(credentials);
+        refreshTokenRepository.flush();
         return generateTokens(credentials);
     }
 
-
     public AuthResponse generateTokens(UserCredentials userCredentials) {
-        String token = jwtProvider.generateToken(userCredentials.getId(),userCredentials.getRole().toString());
+        String token = jwtProvider.generateToken(userCredentials.getId(), userCredentials.getRole().toString());
         RefreshToken refreshToken = refreshTokenService.generateRefreshToken(userCredentials);
-        return new AuthResponse(token,refreshToken);
+        return new AuthResponse(token, refreshToken.getToken());
     }
 }

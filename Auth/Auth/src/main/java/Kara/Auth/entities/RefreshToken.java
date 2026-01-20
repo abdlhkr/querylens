@@ -8,7 +8,6 @@ import lombok.NoArgsConstructor;
 import java.util.Date;
 import java.util.UUID;
 
-
 @Entity
 @Data
 @AllArgsConstructor
@@ -16,7 +15,7 @@ import java.util.UUID;
 @Table(name = "refresh_token")
 public class RefreshToken {
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @Column(nullable = false, unique = true)
