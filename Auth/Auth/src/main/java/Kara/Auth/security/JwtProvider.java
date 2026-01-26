@@ -20,9 +20,10 @@ public class JwtProvider {
         this.expiration = expiration;
     }
 
-    public String generateToken(UUID userId, String role) {
+    public String generateToken(UUID userId, String role,String email) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("role", role);
+        claims.put("email",email);
 
         return Jwts.builder()
                 .issuer("auth-service")

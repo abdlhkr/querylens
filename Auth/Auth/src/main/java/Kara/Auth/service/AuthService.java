@@ -71,7 +71,7 @@ public class AuthService {
     }
 
     public AuthResponse generateTokens(UserCredentials userCredentials) {
-        String token = jwtProvider.generateToken(userCredentials.getId(), userCredentials.getRole().toString());
+        String token = jwtProvider.generateToken(userCredentials.getId(), userCredentials.getRole().toString(),userCredentials.getEmail());
         RefreshToken refreshToken = refreshTokenService.generateRefreshToken(userCredentials);
         return new AuthResponse(token, refreshToken.getToken());
     }
