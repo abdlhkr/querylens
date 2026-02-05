@@ -1,5 +1,6 @@
 package saas.database_initialization.websocket;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -9,6 +10,7 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 import saas.database_initialization.dto.websocket.ConnectionConfirmationMessage;
+import saas.database_initialization.dto.websocket.QueryResultMessage;
 import saas.database_initialization.dto.websocket.WebSocketErrorMessage;
 import saas.database_initialization.entity.CreateDeviceRegistry;
 import saas.database_initialization.entity.Device;
@@ -17,9 +19,13 @@ import saas.database_initialization.exception.BadRequestException;
 import saas.database_initialization.exception.ResourceNotFoundException;
 import saas.database_initialization.repository.CreateDeviceRegistryRepository;
 import saas.database_initialization.service.CreateDeviceCodeService;
+import saas.database_initialization.service.DatabaseWebSocketService;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -35,38 +41,37 @@ public class DeviceWebSocketHandler extends TextWebSocketHandler {
 
     private final CreateDeviceCodeService deviceService;
     private final CreateDeviceRegistryRepository registryRepository;
+    private final DatabaseWebSocketService databaseWebSocketService;
     private final ObjectMapper objectMapper;
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
-        log.info("WebSocket connection attempt from session: {}", session.getId());
+        log.info("WebSocket connection established for session: {}", session.getId());
 
         try {
-            String query = session.getUri().getQuery();
-
-            if (query == null || query.isEmpty()) {
-                sendError(session, "MISSING_PARAMETER", "Either 'code' or 'deviceId' parameter is required");
-                session.close(CloseStatus.BAD_DATA);
-                return;
-            }
-
-            // Parse query parameters
-            String code = getQueryParam(query, "code");
-            String deviceIdStr = getQueryParam(query, "deviceId");
+            // Retrieve pre-validated parameters from session attributes (set by
+            // HandshakeInterceptor)
+            UUID code = (UUID) session.getAttributes().get("code");
+            UUID deviceId = (UUID) session.getAttributes().get("deviceId");
 
             Device device;
 
-            if (code != null && !code.isEmpty()) {
+            if (code != null) {
                 // First connection with registration code
                 device = handleFirstConnection(code, session.getId());
-            } else if (deviceIdStr != null && !deviceIdStr.isEmpty()) {
+            } else if (deviceId != null) {
                 // Reconnection with deviceId
-                device = handleReconnection(deviceIdStr, session.getId());
+                device = handleReconnection(deviceId, session.getId());
             } else {
-                sendError(session, "MISSING_PARAMETER", "Either 'code' or 'deviceId' parameter is required");
-                session.close(CloseStatus.BAD_DATA);
+                // This should never happen if interceptor works correctly
+                log.error("No valid parameters in session attributes - interceptor may have failed");
+                sendError(session, "INTERNAL_ERROR", "Authentication parameters missing");
+                session.close(CloseStatus.SERVER_ERROR);
                 return;
             }
+
+            // Register session for database operations
+            databaseWebSocketService.registerSession(device.getConnectionId(), session);
 
             // Send confirmation message
             sendConfirmation(session, device);
@@ -85,17 +90,10 @@ public class DeviceWebSocketHandler extends TextWebSocketHandler {
 
     /**
      * Handle first connection with registration code
+     * UUID format is already validated by HandshakeInterceptor
      */
-    private Device handleFirstConnection(String code, String connectionId) {
-        log.info("First connection with code: {}", code);
-
-        // Validate code format
-        UUID codeUUID;
-        try {
-            codeUUID = UUID.fromString(code);
-        } catch (IllegalArgumentException e) {
-            throw new BadRequestException("Invalid code format");
-        }
+    private Device handleFirstConnection(UUID codeUUID, String connectionId) {
+        log.info("First connection with code: {}", codeUUID);
 
         // Find registration
         CreateDeviceRegistry registry = registryRepository.findById(codeUUID)
@@ -107,7 +105,7 @@ public class DeviceWebSocketHandler extends TextWebSocketHandler {
             throw new BadRequestException("Registration code has expired");
         }
 
-        // Create device using existing authenticate method
+        // Create device
         Device device = new Device();
         device.setUserID(UUID.fromString(registry.getUserID()));
         device.setStatus(DeviceStatus.ACTIVE);
@@ -127,17 +125,10 @@ public class DeviceWebSocketHandler extends TextWebSocketHandler {
 
     /**
      * Handle reconnection with existing deviceId
+     * UUID format is already validated by HandshakeInterceptor
      */
-    private Device handleReconnection(String deviceIdStr, String connectionId) {
-        log.info("Reconnection with deviceId: {}", deviceIdStr);
-
-        // Validate deviceId format
-        UUID deviceId;
-        try {
-            deviceId = UUID.fromString(deviceIdStr);
-        } catch (IllegalArgumentException e) {
-            throw new BadRequestException("Invalid deviceId format");
-        }
+    private Device handleReconnection(UUID deviceId, String connectionId) {
+        log.info("Reconnection with deviceId: {}", deviceId);
 
         // Authenticate with deviceId
         return deviceService.authenticateWithDeviceId(deviceId, connectionId);
@@ -170,32 +161,91 @@ public class DeviceWebSocketHandler extends TextWebSocketHandler {
         }
     }
 
-    /**
-     * Extract query parameter from query string
-     */
-    private String getQueryParam(String query, String paramName) {
-        if (query == null)
-            return null;
-
-        String[] pairs = query.split("&");
-        for (String pair : pairs) {
-            String[] keyValue = pair.split("=");
-            if (keyValue.length == 2 && keyValue[0].equals(paramName)) {
-                return keyValue[1];
-            }
-        }
-        return null;
-    }
-
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
         log.info("WebSocket connection closed: {} - {}", session.getId(), status);
+
+        // Unregister session
+        databaseWebSocketService.unregisterSession(session.getId());
+
         deviceService.handleDisconnect(session.getId());
     }
 
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
-        log.debug("Received message from {}: {}", session.getId(), message.getPayload());
-        // Handle heartbeat or other messages here if needed
+        String payload = message.getPayload();
+        log.debug("Received message from {}: {}", session.getId(), payload);
+
+        try {
+            JsonNode jsonNode = objectMapper.readTree(payload);
+            String messageType = jsonNode.has("type") ? jsonNode.get("type").asText() : null;
+
+            if (messageType == null) {
+                log.warn("Received message without type from {}", session.getId());
+                return;
+            }
+
+            // Handle database-related messages from agent
+            switch (messageType) {
+                case "DATABASE_VERIFIED":
+                    handleDatabaseVerified(jsonNode);
+                    break;
+
+                case "DATABASE_FAILED":
+                    handleDatabaseFailed(jsonNode);
+                    break;
+
+                case "QUERY_RESULT":
+                    handleQueryResult(jsonNode);
+                    break;
+
+                case "QUERY_ERROR":
+                    handleQueryError(jsonNode);
+                    break;
+
+                case "PONG":
+                    log.debug("Received PONG from {}", session.getId());
+                    break;
+
+                default:
+                    log.debug("Received unknown message type: {} from {}", messageType, session.getId());
+            }
+
+        } catch (Exception e) {
+            log.error("Error processing message from {}: {}", session.getId(), e.getMessage());
+        }
+    }
+
+    private void handleDatabaseVerified(JsonNode jsonNode) {
+        UUID databaseId = UUID.fromString(jsonNode.get("databaseId").asText());
+        databaseWebSocketService.handleDatabaseVerified(databaseId);
+    }
+
+    private void handleDatabaseFailed(JsonNode jsonNode) {
+        UUID databaseId = UUID.fromString(jsonNode.get("databaseId").asText());
+        String error = jsonNode.has("error") ? jsonNode.get("error").asText() : "Unknown error";
+        databaseWebSocketService.handleDatabaseFailed(databaseId, error);
+    }
+
+    @SuppressWarnings("unchecked")
+    private void handleQueryResult(JsonNode jsonNode) {
+        String requestId = jsonNode.get("requestId").asText();
+        int rowCount = jsonNode.has("rowCount") ? jsonNode.get("rowCount").asInt() : 0;
+        long executionTimeMs = jsonNode.has("executionTimeMs") ? jsonNode.get("executionTimeMs").asLong() : 0;
+
+        List<Map<String, Object>> data = new ArrayList<>();
+        if (jsonNode.has("data") && jsonNode.get("data").isArray()) {
+            data = objectMapper.convertValue(jsonNode.get("data"), List.class);
+        }
+
+        QueryResultMessage result = QueryResultMessage.create(requestId, data, executionTimeMs);
+        databaseWebSocketService.handleQueryResult(requestId, result);
+    }
+
+    private void handleQueryError(JsonNode jsonNode) {
+        String requestId = jsonNode.get("requestId").asText();
+        String error = jsonNode.has("error") ? jsonNode.get("error").asText() : "Unknown error";
+        String errorCode = jsonNode.has("errorCode") ? jsonNode.get("errorCode").asText() : "UNKNOWN";
+        databaseWebSocketService.handleQueryError(requestId, error, errorCode);
     }
 }

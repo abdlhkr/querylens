@@ -1,0 +1,31 @@
+{
+    "name": "websocket-test-agent",
+    "version": "1.0.0",
+    "description": "Gateway WebSocket Test Agent",
+    "main": "src/index.js",
+    "scripts": {
+        "start": "node src/index.js",
+        "dev": "nodemon src/index.js",
+        "test": "node src/tests/ConnectionTest.js"
+    },
+    "dependencies": {
+        "ws": "^8.16.0",
+        "axios": "^1.6.7",
+        "dotenv": "^16.4.1",
+        "winston": "^3.11.0",
+        "uuid": "^9.0.1",
+        "pg": "^8.11.3",
+        "mysql2": "^3.9.1"
+    },
+    "devDependencies": {
+        "nodemon": "^3.0.3"
+    },
+    "keywords": [
+        "websocket",
+        "test",
+        "agent",
+        "gateway"
+    ],
+    "author": "",
+    "license": "ISC"
+}

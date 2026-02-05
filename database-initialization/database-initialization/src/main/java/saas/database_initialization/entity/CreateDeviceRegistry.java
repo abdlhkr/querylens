@@ -5,7 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.sql.Date;
+import java.util.Date;
 import java.util.UUID;
 
 @AllArgsConstructor
@@ -19,7 +19,7 @@ public class CreateDeviceRegistry {
     private String userID;
     private Date expirationTime;
 
-    @PrePersist
+
     public void setExpirationTime() {
         this.expirationTime = new Date(System.currentTimeMillis() + 30L * 60 * 1000);
     }

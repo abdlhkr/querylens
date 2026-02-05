@@ -12,4 +12,9 @@ public interface DeviceRepository extends JpaRepository<Device, UUID> {
     Optional<Device> findByConnectionId(String connectionId);
 
     List<Device> findByStatus(DeviceStatus status);
+
+    /**
+     * Find device by user ID - each user has one device
+     */
+    Optional<Device> findByUserID(UUID userId);
 }

@@ -25,7 +25,7 @@ public class JwtClaimsToHeadersFilter implements GlobalFilter, Ordered {
         String path = exchange.getRequest().getURI().getPath();
 
         // Skip validation for auth endpoints
-        if (path.startsWith("/auth/")) {
+        if (path.startsWith("/auth/") || path.startsWith("/ws/device")) {
             return chain.filter(exchange);
         }
 

@@ -27,6 +27,7 @@ import java.util.UUID;
 public class CreateDeviceCodeService {
     private final CreateDeviceRegistryRepository registryRepository;
     private final DeviceRepository deviceRepository;
+    private final long tokenLifetime = 1000 * 60 * 10;
 
     public boolean isAny(String userId) {
         return registryRepository.findByUserID(userId).isPresent();
@@ -52,7 +53,7 @@ public class CreateDeviceCodeService {
 
         CreateDeviceRegistry registry = new CreateDeviceRegistry();
         registry.setUserID(request.getUserID());
-
+        registry.setExpirationTime();
         CreateDeviceRegistry dbResponse = registryRepository.save(registry);
         log.info("Device registration code created: {} for user: {}", dbResponse.getDeviceID(), request.getUserID());
 
@@ -74,7 +75,7 @@ public class CreateDeviceCodeService {
         // Check if code is expired
         if (existing.getExpirationTime().before(new Date())) {
             registryRepository.delete(existing);
-            log.warn("Expired registration code for user: {}", request.getUserID());
+            log.warn("Expired registration code for user: {} old code will be deleted you can get a new one ", request.getUserID());
             throw new BadRequestException("Registration code has expired. Please request a new code.");
         }
 

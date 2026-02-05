@@ -6,11 +6,10 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
-/**
- * Message sent to client when WebSocket connection is established
- */
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -27,7 +26,7 @@ public class ConnectionConfirmationMessage {
         private UUID deviceId;
         private UUID userId;
         private String status;
-        private LocalDateTime connectedAt;
+        private String connectedAt; // Changed to String for JSON serialization
     }
 
     public static ConnectionConfirmationMessage create(UUID deviceId, UUID userId, String status,
@@ -38,7 +37,9 @@ public class ConnectionConfirmationMessage {
                         .deviceId(deviceId)
                         .userId(userId)
                         .status(status)
-                        .connectedAt(connectedAt)
+                        .connectedAt(connectedAt != null
+                                ? connectedAt.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+                                : null)
                         .build())
                 .build();
     }
