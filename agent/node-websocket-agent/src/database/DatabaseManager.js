@@ -229,6 +229,30 @@ class DatabaseManager {
                     rowCount: rows.length,
                     fields: fields?.map(f => f.name)
                 };
+            } else if (dbInfo.dbType === 'MSSQL') {
+                const queryResult = await client.request().query(query);
+                result = {
+                    rows: queryResult.recordset,
+                    rowCount: queryResult.rowsAffected?.[0] || queryResult.recordset?.length || 0,
+                    fields: queryResult.recordset?.columns ? Object.keys(queryResult.recordset.columns) : []
+                };
+            } else if (dbInfo.dbType === 'SQLITE') {
+                const queryResult = client.exec(query);
+                // sql.js returns an array of result sets
+                const firstResult = queryResult[0] || { columns: [], values: [] };
+                // Convert values array to row objects
+                const rows = firstResult.values.map(row => {
+                    const obj = {};
+                    firstResult.columns.forEach((col, idx) => {
+                        obj[col] = row[idx];
+                    });
+                    return obj;
+                });
+                result = {
+                    rows,
+                    rowCount: rows.length,
+                    fields: firstResult.columns
+                };
             }
 
             this.connectionPool.releaseConnection(databaseId, client);

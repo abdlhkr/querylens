@@ -99,6 +99,10 @@ class ConnectionPool {
                 return this.createPostgresConnection(host, port, databaseName, username, password);
             case 'MYSQL':
                 return this.createMysqlConnection(host, port, databaseName, username, password);
+            case 'MSSQL':
+                return this.createMssqlConnection(host, port, databaseName, username, password);
+            case 'SQLITE':
+                return this.createSqliteConnection(databaseName);
             default:
                 throw new Error(`Unsupported database type: ${dbType}`);
         }
@@ -135,6 +139,50 @@ class ConnectionPool {
             connectTimeout: this.config.acquireTimeoutMs
         });
         return connection;
+    }
+
+    /**
+     * Create MSSQL connection
+     */
+    async createMssqlConnection(host, port, database, user, password) {
+        const sql = require('mssql');
+        const config = {
+            server: host,
+            port: parseInt(port),
+            database,
+            user,
+            password,
+            options: {
+                encrypt: false,
+                trustServerCertificate: true
+            },
+            connectionTimeout: this.config.acquireTimeoutMs
+        };
+        const pool = await sql.connect(config);
+        return pool;
+    }
+
+    /**
+     * Create SQLite connection
+     * Note: SQLite is file-based, so databaseName is the file path
+     * Using sql.js (pure JavaScript implementation)
+     */
+    async createSqliteConnection(databasePath) {
+        const initSqlJs = require('sql.js');
+        const fs = require('fs');
+        const SQL = await initSqlJs();
+
+        let db;
+        if (fs.existsSync(databasePath)) {
+            const fileBuffer = fs.readFileSync(databasePath);
+            db = new SQL.Database(fileBuffer);
+        } else {
+            db = new SQL.Database();
+        }
+
+        // Store the path for saving later
+        db._filePath = databasePath;
+        return db;
     }
 
     /**
@@ -193,6 +241,10 @@ class ConnectionPool {
                 await client.end();
             } else if (dbType === 'MYSQL') {
                 await client.end();
+            } else if (dbType === 'MSSQL') {
+                await client.close();
+            } else if (dbType === 'SQLITE') {
+                client.close();
             }
         } catch (error) {
             logger.error('Error closing connection', { error: error.message });
@@ -239,6 +291,10 @@ class ConnectionPool {
                 await client.query('SELECT 1');
             } else if (connectionInfo.dbType === 'MYSQL') {
                 await client.query('SELECT 1');
+            } else if (connectionInfo.dbType === 'MSSQL') {
+                await client.request().query('SELECT 1');
+            } else if (connectionInfo.dbType === 'SQLITE') {
+                client.exec('SELECT 1');
             }
 
             await this.closeConnection(client, connectionInfo.dbType);

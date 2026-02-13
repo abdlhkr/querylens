@@ -9,13 +9,15 @@
         "test": "node src/tests/ConnectionTest.js"
     },
     "dependencies": {
-        "ws": "^8.16.0",
         "axios": "^1.6.7",
         "dotenv": "^16.4.1",
-        "winston": "^3.11.0",
-        "uuid": "^9.0.1",
+        "mssql": "^10.0.2",
+        "mysql2": "^3.9.1",
         "pg": "^8.11.3",
-        "mysql2": "^3.9.1"
+        "sql.js": "^1.10.2",
+        "uuid": "^9.0.1",
+        "winston": "^3.11.0",
+        "ws": "^8.16.0"
     },
     "devDependencies": {
         "nodemon": "^3.0.3"

@@ -1,11 +1,10 @@
 package saas.database_initialization.controller;
 
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import saas.database_initialization.dto.query.ExecuteQueryRequest;
 import saas.database_initialization.dto.query.QueryExecutionResponse;
 import saas.database_initialization.dto.response.ApiResponse;
 import saas.database_initialization.dto.websocket.QueryResultMessage;
@@ -22,6 +21,10 @@ import java.util.concurrent.TimeUnit;
 /**
  * REST controller for executing SQL queries on user databases.
  * Queries are forwarded to the agent via WebSocket.
+ *
+ * databaseId is passed as a query parameter (?databaseId=...)
+ * SQL query is sent as plain text in the request body (Content-Type:
+ * text/plain)
  */
 @Slf4j
 @RestController
@@ -36,22 +39,40 @@ public class QueryController {
     private static final int QUERY_TIMEOUT_SECONDS = 60;
 
     /**
-     * Execute a SQL query on a user's database
-     * The query is sent to the agent via WebSocket
-     * Agent executes it and returns the result
-     * 
-     * Response includes originalQuery for self-healing purposes
+     * Execute a SQL query on a user's database.
+     *
+     * @param databaseId UUID of the database (query parameter)
+     * @param query      SQL query as plain text (request body, Content-Type:
+     *                   text/plain)
+     * @param userId     User ID from JWT header
+     *
+     *                   Example:
+     *                   POST
+     *                   /api/devices/queries/execute?databaseId=550e8400-e29b-41d4-a716-446655440000
+     *                   Content-Type: text/plain
+     *                   X-User-Id: user-123
+     *
+     *                   SELECT u.id, u.name, o.order_date
+     *                   FROM users u
+     *                   JOIN orders o ON u.id = o.user_id
+     *                   WHERE o.status = 'ACTIVE'
      */
-    @PostMapping("/execute")
+    @PostMapping(value = "/execute", consumes = MediaType.TEXT_PLAIN_VALUE)
     public ResponseEntity<ApiResponse<QueryExecutionResponse>> executeQuery(
-            @Valid @RequestBody ExecuteQueryRequest request,
+            @RequestParam UUID databaseId,
+            @RequestBody String query,
             @RequestHeader("X-User-Id") String userId) {
 
+        // Validate inputs
+        if (query == null || query.isBlank()) {
+            throw new BadRequestException("SQL query is required");
+        }
+
         log.info("POST /api/devices/queries/execute - User: {}, Database: {}",
-                userId, request.getDatabaseId());
+                userId, databaseId);
 
         // Validate database belongs to user and is verified
-        DatabaseConnection connection = databaseService.getConnectionEntity(request.getDatabaseId());
+        DatabaseConnection connection = databaseService.getConnectionEntity(databaseId);
 
         if (!connection.getUserId().toString().equals(userId)) {
             throw new BadRequestException("Database not found or access denied");
@@ -66,8 +87,8 @@ public class QueryController {
             return ResponseEntity.ok(ApiResponse.success(
                     QueryExecutionResponse.error(
                             UUID.randomUUID().toString(),
-                            request.getDatabaseId(),
-                            request.getQuery(),
+                            databaseId,
+                            query,
                             "Agent is not connected. Please start your agent and try again.",
                             "AGENT_DISCONNECTED"),
                     "Query execution failed"));
@@ -75,8 +96,8 @@ public class QueryController {
 
         try {
             // Send query to agent and wait for result
-            CompletableFuture<QueryResultMessage> futureResult = webSocketService.executeQuery(request.getDatabaseId(),
-                    request.getQuery());
+            CompletableFuture<QueryResultMessage> futureResult = webSocketService.executeQuery(databaseId,
+                    query);
 
             // Wait for result with timeout
             QueryResultMessage result = futureResult.get(QUERY_TIMEOUT_SECONDS, TimeUnit.SECONDS);
@@ -84,8 +105,8 @@ public class QueryController {
             // Build success response
             QueryExecutionResponse response = QueryExecutionResponse.success(
                     result.getRequestId(),
-                    request.getDatabaseId(),
-                    request.getQuery(), // Include original query
+                    databaseId,
+                    query, // Include original query
                     result.getData(),
                     result.getExecutionTimeMs());
 
@@ -109,8 +130,8 @@ public class QueryController {
             // Build error response with original query for self-healing
             QueryExecutionResponse response = QueryExecutionResponse.error(
                     UUID.randomUUID().toString(),
-                    request.getDatabaseId(),
-                    request.getQuery(), // Include original query for self-healing
+                    databaseId,
+                    query, // Include original query for self-healing
                     errorMessage,
                     errorCode);
 
@@ -129,7 +150,6 @@ public class QueryController {
         log.info("POST /api/devices/queries/test/{} - User: {}", databaseId, userId);
 
         // Use a simple test query
-        ExecuteQueryRequest request = new ExecuteQueryRequest(databaseId, "SELECT 1");
-        return executeQuery(request, userId);
+        return executeQuery(databaseId, "SELECT 1", userId);
     }
 }

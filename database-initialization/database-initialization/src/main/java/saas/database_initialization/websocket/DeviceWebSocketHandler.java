@@ -173,6 +173,7 @@ public class DeviceWebSocketHandler extends TextWebSocketHandler {
 
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
+        log.info("Received message: {}", message.getPayloadLength());
         String payload = message.getPayload();
         log.debug("Received message from {}: {}", session.getId(), payload);
 
@@ -229,6 +230,7 @@ public class DeviceWebSocketHandler extends TextWebSocketHandler {
 
     @SuppressWarnings("unchecked")
     private void handleQueryResult(JsonNode jsonNode) {
+
         String requestId = jsonNode.get("requestId").asText();
         int rowCount = jsonNode.has("rowCount") ? jsonNode.get("rowCount").asInt() : 0;
         long executionTimeMs = jsonNode.has("executionTimeMs") ? jsonNode.get("executionTimeMs").asLong() : 0;
