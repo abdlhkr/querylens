@@ -33,7 +33,9 @@ class WebSocketClient extends EventEmitter {
             const headers = await this.buildHeaders();
 
             // WebSocket bağlantısı
-            this.ws = new WebSocket(wsUrl, { headers });
+            this.ws = new WebSocket(wsUrl, { headers ,
+                 maxPayload: 5 * 1024 * 1024
+            });
 
             // Bağlantı timeout'u ayarla
             this.setConnectionTimeout();
