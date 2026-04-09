@@ -31,10 +31,10 @@ class WebSocketAgent {
         this.ensureLogsDirectory();
 
         try {
-            // 1. Login yap (gerekirse)
+/*             // 1. Login yap (gerekirse)
             if (config.auth.email && config.auth.password) {
                 await this.authService.login();
-            }
+            } */
 
             // 2. Mevcut device ID'yi yükle
             const existingDeviceId = this.deviceManager.loadDeviceId();

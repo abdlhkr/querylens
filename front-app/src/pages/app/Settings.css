@@ -1,0 +1,43 @@
+/* ─── Settings Layout ─────────────────────────────────────────────────────── */
+.settings-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 620px;
+}
+
+/* ─── Section Header ──────────────────────────────────────────────────────── */
+.settings-section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.settings-section-title {
+  font-family: var(--font-serif);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.3px;
+}
+
+/* ─── Settings Form ───────────────────────────────────────────────────────── */
+.settings-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ─── Danger Zone ─────────────────────────────────────────────────────────── */
+.danger-zone {
+  background: rgba(220, 38, 38, 0.03) !important;
+  border-color: rgba(220, 38, 38, 0.2) !important;
+}
+
+.danger-zone:hover {
+  background: rgba(220, 38, 38, 0.06) !important;
+  border-color: rgba(220, 38, 38, 0.3) !important;
+}

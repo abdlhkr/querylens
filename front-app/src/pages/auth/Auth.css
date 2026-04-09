@@ -1,0 +1,232 @@
+/* ─── Auth pages — Editorial cream/gold/ink theme ─────────────────────────── */
+.auth-bg {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-primary);
+  position: relative;
+  overflow: hidden;
+  padding: 24px;
+}
+
+/* Subtle warm glows */
+.auth-glow {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(120px);
+  pointer-events: none;
+}
+.auth-glow-1 {
+  width: 560px;
+  height: 560px;
+  top: -200px;
+  left: -200px;
+  background: radial-gradient(circle, rgba(184, 147, 42, 0.07) 0%, transparent 70%);
+}
+.auth-glow-2 {
+  width: 480px;
+  height: 480px;
+  bottom: -180px;
+  right: -100px;
+  background: radial-gradient(circle, rgba(184, 147, 42, 0.05) 0%, transparent 70%);
+}
+
+/* ─── Card ────────────────────────────────────────────────────────────────── */
+.auth-card {
+  width: 100%;
+  max-width: 420px;
+  padding: 44px 40px;
+  position: relative;
+  z-index: 1;
+  animation: slideUp 0.3s ease;
+  background: #fff;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 12px 40px rgba(15, 15, 15, 0.06), 0 2px 8px rgba(15, 15, 15, 0.04);
+}
+
+.auth-lang {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+}
+
+/* ─── Logo ────────────────────────────────────────────────────────────────── */
+.auth-logo {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-bottom: 8px;
+  justify-content: center;
+}
+
+.auth-logo .ql-logo {
+  font-family: var(--font-serif);
+  font-weight: 700;
+  font-size: 22px;
+  color: var(--ink);
+  letter-spacing: -0.4px;
+  text-decoration: none;
+}
+.auth-logo .ql-logo em {
+  color: var(--gold);
+  font-style: normal;
+}
+
+/* ─── Eyebrow tag ─────────────────────────────────────────────────────────── */
+.auth-eyebrow {
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  color: var(--text-subtle);
+  text-transform: uppercase;
+  margin-bottom: 28px;
+}
+
+/* ─── Title ───────────────────────────────────────────────────────────────── */
+.auth-title {
+  font-family: var(--font-serif);
+  font-size: 22px;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 28px;
+  color: var(--ink);
+  letter-spacing: -0.5px;
+  line-height: 1.15;
+}
+
+/* ─── Form ────────────────────────────────────────────────────────────────── */
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+/* Input overrides inside auth */
+.auth-bg .input-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.auth-bg .input {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: 11px 13px;
+  font-size: 14px;
+  color: var(--text-body);
+  transition: border-color 0.18s, box-shadow 0.18s;
+  font-family: var(--font-sans);
+}
+.auth-bg .input::placeholder { color: var(--text-subtle); }
+.auth-bg .input:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(184, 147, 42, 0.12);
+}
+.auth-bg .input-iconed { padding-left: 38px; }
+.auth-bg .input-iconed-right { padding-right: 40px; }
+.auth-bg .input-error {
+  border-color: var(--error) !important;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1) !important;
+}
+.auth-bg .field-error {
+  font-size: 11px;
+  color: var(--error);
+  margin-top: 2px;
+  font-family: var(--font-mono);
+}
+
+/* Icons */
+.auth-bg .input-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-subtle);
+  pointer-events: none;
+}
+.auth-bg .input-icon-right {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--text-subtle);
+  cursor: pointer;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  transition: color 0.18s;
+}
+.auth-bg .input-icon-right:hover { color: var(--text-body); }
+
+/* ─── Buttons ─────────────────────────────────────────────────────────────── */
+.auth-bg .btn-primary {
+  background: var(--ink);
+  color: var(--bg-primary);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-size: 14px;
+  letter-spacing: 0.02em;
+  box-shadow: none;
+  transition: background 0.18s, transform 0.15s;
+  border: 1px solid var(--ink);
+}
+.auth-bg .btn-primary:hover:not(:disabled) {
+  background: var(--ink-2);
+  transform: translateY(-1px);
+}
+
+.auth-bg .btn-secondary {
+  background: #fff;
+  color: var(--text-body);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-sans);
+  font-weight: 500;
+  transition: border-color 0.18s, background 0.18s;
+}
+.auth-bg .btn-secondary:hover:not(:disabled) {
+  border-color: var(--border-mid);
+  background: var(--bg-secondary);
+}
+
+.google-btn { margin-bottom: 20px; }
+
+/* ─── Divider ─────────────────────────────────────────────────────────────── */
+.auth-bg .divider {
+  color: var(--text-subtle);
+  font-size: 12px;
+}
+.auth-bg .divider::before,
+.auth-bg .divider::after { background: var(--border-light); }
+
+/* ─── Switch link ─────────────────────────────────────────────────────────── */
+.auth-switch {
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.auth-link {
+  color: var(--gold);
+  font-weight: 600;
+  transition: color 0.18s;
+}
+.auth-link:hover {
+  color: var(--gold-hover);
+  text-decoration: underline;
+}
+
+/* ─── Responsive ──────────────────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .auth-card { padding: 32px 22px; }
+}

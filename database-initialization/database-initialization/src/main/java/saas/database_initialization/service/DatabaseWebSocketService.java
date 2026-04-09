@@ -3,17 +3,18 @@ package saas.database_initialization.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import saas.database_initialization.dto.websocket.*;
 import saas.database_initialization.entity.DatabaseConnection;
 import saas.database_initialization.entity.Device;
+import saas.database_initialization.event.DatabaseVerifiedEvent;
 import saas.database_initialization.exception.ResourceNotFoundException;
 import saas.database_initialization.repository.DeviceRepository;
 
 import java.io.IOException;
-import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -31,6 +32,7 @@ public class DatabaseWebSocketService {
     private final DeviceRepository deviceRepository;
     private final DatabaseConnectionService databaseConnectionService;
     private final ObjectMapper objectMapper;
+    private final ApplicationEventPublisher eventPublisher;
 
     // Active WebSocket sessions: connectionId -> session
     private final ConcurrentHashMap<String, WebSocketSession> activeSessions = new ConcurrentHashMap<>();
@@ -164,6 +166,9 @@ public class DatabaseWebSocketService {
     public void handleDatabaseVerified(UUID databaseId) {
         databaseConnectionService.markAsVerified(databaseId);
         log.info("Database verified: {}", databaseId);
+
+        // Publish event to trigger introspection queries
+        eventPublisher.publishEvent(new DatabaseVerifiedEvent(this, databaseId));
     }
 
     /**

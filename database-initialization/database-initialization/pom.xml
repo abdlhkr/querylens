@@ -77,6 +77,16 @@
 			<artifactId>jackson-databind</artifactId>
 		</dependency>
 
+		<!-- WebClient for calling fast_service -->
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-webflux</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>io.projectreactor.netty</groupId>
+			<artifactId>reactor-netty-http</artifactId>
+		</dependency>
+
 	</dependencies>
 
 	<build>

@@ -194,6 +194,7 @@ class DatabaseManager {
     async executeQuery(databaseId, query) {
         const dbInfo = this.databases.get(databaseId);
 
+        
         if (!dbInfo) {
             throw new Error(`Database not found: ${databaseId}. Please verify connection first.`);
         }

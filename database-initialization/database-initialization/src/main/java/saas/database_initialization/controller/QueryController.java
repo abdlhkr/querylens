@@ -5,6 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import saas.database_initialization.dto.query.NaturalLanguageQueryRequest;
+import saas.database_initialization.dto.query.NaturalLanguageQueryResponse;
 import saas.database_initialization.dto.query.QueryExecutionResponse;
 import saas.database_initialization.dto.response.ApiResponse;
 import saas.database_initialization.dto.websocket.QueryResultMessage;
@@ -13,6 +15,7 @@ import saas.database_initialization.enums.ConnectionStatus;
 import saas.database_initialization.exception.BadRequestException;
 import saas.database_initialization.service.DatabaseConnectionService;
 import saas.database_initialization.service.DatabaseWebSocketService;
+import saas.database_initialization.service.NaturalLanguageQueryService;
 
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -34,6 +37,7 @@ public class QueryController {
 
     private final DatabaseConnectionService databaseService;
     private final DatabaseWebSocketService webSocketService;
+    private final NaturalLanguageQueryService naturalLanguageQueryService;
 
     // Query timeout in seconds
     private static final int QUERY_TIMEOUT_SECONDS = 60;
@@ -83,7 +87,7 @@ public class QueryController {
         }
 
         // Check if agent is connected
-        if (!webSocketService.isDeviceConnected(connection.getDeviceId())) {
+        if (connection.getDeviceId() == null || !webSocketService.isDeviceConnected(connection.getDeviceId())) {
             return ResponseEntity.ok(ApiResponse.success(
                     QueryExecutionResponse.error(
                             UUID.randomUUID().toString(),
@@ -151,5 +155,41 @@ public class QueryController {
 
         // Use a simple test query
         return executeQuery(databaseId, "SELECT 1", userId);
+    }
+
+    /**
+     * Execute a natural language query on a user's database.
+     *
+     * The service will:
+     * 1. Fetch the stored schema (introspection results)
+     * 2. Call fast_service to generate SQL from the natural language question
+     * 3. Normalize newlines in the generated SQL
+     * 4. Execute the SQL via the WebSocket agent
+     *
+     * @param databaseId UUID of the database (query parameter)
+     * @param request    JSON body containing the natural language question
+     * @param userId     User ID from JWT header
+     *
+     *                   Example:
+     *                   POST
+     *                   /api/devices/queries/natural-language?databaseId=550e8400-e29b-41d4-a716-446655440000
+     *                   Content-Type: application/json
+     *                   X-User-Id: user-123
+     *
+     *                   { "question": "bana tüm kullanıcıları getir" }
+     */
+    @PostMapping("/natural-language")
+    public ResponseEntity<ApiResponse<NaturalLanguageQueryResponse>> naturalLanguageQuery(
+            @RequestParam UUID databaseId,
+            @RequestBody NaturalLanguageQueryRequest request,
+            @RequestHeader("X-User-Id") String userId) {
+
+        log.info("POST /api/devices/queries/natural-language - User: {}, Database: {}, Question: {}",
+                userId, databaseId, request.getQuestion());
+
+        NaturalLanguageQueryResponse response = naturalLanguageQueryService.process(databaseId, userId,
+                request.getQuestion());
+
+        return ResponseEntity.ok(ApiResponse.success(response, "Natural language query processed"));
     }
 }

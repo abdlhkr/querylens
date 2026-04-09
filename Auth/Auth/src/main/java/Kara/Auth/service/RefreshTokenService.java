@@ -13,6 +13,8 @@ import java.util.Date;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.transaction.annotation.Transactional;
+
 @Service
 @RequiredArgsConstructor
 public class RefreshTokenService {
@@ -20,7 +22,11 @@ public class RefreshTokenService {
     private long expiration;
     private final RefreshTokenRepository refreshTokenRepository;
 
+    @Transactional
     public RefreshToken generateRefreshToken(UserCredentials user){
+        refreshTokenRepository.deleteByUser(user);
+        refreshTokenRepository.flush();
+        
         RefreshToken refreshToken = new RefreshToken();
         refreshToken.setToken(UUID.randomUUID().toString());
         refreshToken.setExpiryDate(new Date(System.currentTimeMillis() + expiration));

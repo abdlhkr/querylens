@@ -1,5 +1,19 @@
 services:
 
+  device-postgres:
+    image: postgres:15
+    container_name: device-postgres
+    environment:
+      POSTGRES_DB: device_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123456
+    ports:
+      - "5435:5432"
+    volumes:
+      - device-db:/var/lib/postgresql/data
+    networks:
+      - saas-net
+
   auth-postgres:
     image: postgres:15
     container_name: auth-postgres
@@ -28,9 +42,28 @@ services:
     networks:
       - saas-net
 
+  db-service:
+    build:
+      context: ./database-initialization/database-initialization
+    image: db-service:latest
+    container_name: db-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://device-postgres:5432/device_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: 123456
+      FAST_SERVICE_URL: http://fast-service:8000
+      SERVER_PORT: 8083
+    ports:
+      - "8083:8083"
+    depends_on:
+      - device-postgres
+      - fast-service
+    networks:
+      - saas-net
+
   auth-service:
     build:
-      context: ./Auth/Auth/target
+      context: ./Auth/Auth
     image: auth-service:latest
     container_name: auth-service
     environment:
@@ -47,7 +80,7 @@ services:
 
   user-service:
     build:
-      context: ./User/user/target
+      context: ./User/user
     image: user-service:latest
     container_name: user-service
     environment:
@@ -64,7 +97,7 @@ services:
 
   gateway-service:
     build:
-      context: ./gateway-service/gateway-service/target
+      context: ./gateway-service/gateway-service
     image: gateway-service:latest
     container_name: gateway-service
     environment:
@@ -74,6 +107,19 @@ services:
     depends_on:
       - auth-service
       - user-service
+      - db-service
+    networks:
+      - saas-net
+
+  fast-service:
+    build:
+      context: ./Fast-Service
+    image: fast-service:latest
+    container_name: fast-service
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+    ports:
+      - "8000:8000"
     networks:
       - saas-net
 
@@ -84,4 +130,6 @@ networks:
 volumes:
   auth-db:
   user-db:
+  device-db:
+
 

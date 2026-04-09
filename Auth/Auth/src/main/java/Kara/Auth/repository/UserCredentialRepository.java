@@ -8,4 +8,7 @@ import java.util.UUID;
 
 public interface UserCredentialRepository extends JpaRepository<UserCredentials, UUID> {
     Optional<UserCredentials> findByEmail(String email);
+    // OAuth2 akışında googleId ile kullanıcıyı bulmak için kullanılır
+    Optional<UserCredentials> findByGoogleId(String googleId);
 }
+

@@ -1,0 +1,186 @@
+/* ─── Onboarding — Cream/Gold/Ink Theme ───────────────────────────────────── */
+.onboarding-bg {
+  min-height: 100vh;
+  background: var(--bg-primary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32px 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+.onboarding-glow {
+  position: absolute;
+  width: 700px;
+  height: 700px;
+  top: -280px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: radial-gradient(circle, rgba(184, 147, 42, 0.07) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.onboarding-wrapper {
+  width: 100%;
+  max-width: 560px;
+  position: relative;
+  z-index: 1;
+}
+
+.onboarding-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 32px;
+}
+
+.ob-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-serif);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.4px;
+}
+
+.ob-logo em {
+  color: var(--gold);
+  font-style: normal;
+}
+
+/* ─── Stepper ─────────────────────────────────────────────────────────────── */
+.stepper {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0;
+  margin-bottom: 28px;
+  position: relative;
+}
+
+.stepper-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  flex: 1;
+}
+
+.stepper-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--bg-tertiary);
+  border: 1.5px solid var(--border-mid);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 13px;
+  transition: var(--transition);
+  z-index: 1;
+  flex-shrink: 0;
+}
+
+.stepper-icon.active {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--bg-primary);
+}
+
+.stepper-icon.done {
+  background: rgba(22, 163, 74, 0.1);
+  border-color: var(--success);
+  color: var(--success);
+}
+
+.stepper-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-subtle);
+  margin-top: 6px;
+  text-align: center;
+  font-weight: 500;
+  white-space: nowrap;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.stepper-label.active-label {
+  color: var(--gold);
+  font-weight: 500;
+}
+
+.stepper-line {
+  position: absolute;
+  top: 17px;
+  left: 50%;
+  width: 100%;
+  height: 1px;
+  background: var(--border-light);
+  z-index: 0;
+}
+
+.stepper-line.done {
+  background: var(--success);
+}
+
+/* ─── Card ────────────────────────────────────────────────────────────────── */
+.onboarding-card {
+  padding: 32px;
+  background: #fff;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+}
+
+.ob-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ob-title {
+  font-family: var(--font-serif);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 4px;
+  letter-spacing: -0.3px;
+}
+
+.ob-desc {
+  font-size: 14px;
+  font-weight: 300;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.ob-hint {
+  font-size: 12px;
+  color: var(--text-subtle);
+  text-align: center;
+  font-family: var(--font-mono);
+}
+
+/* ─── Agent Code Box ──────────────────────────────────────────────────────── */
+.agent-code-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--ink);
+  border: 1px solid #1a1a1a;
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+}
+
+.agent-code-text {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--gold-pale);
+  word-break: break-all;
+  flex: 1;
+}

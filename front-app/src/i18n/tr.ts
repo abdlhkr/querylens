@@ -1,0 +1,263 @@
+export const tr = {
+  nav: {
+    dashboard: 'Kontrol Paneli',
+    databases: 'Veritabanları',
+    query: 'Sorgu',
+    settings: 'Ayarlar',
+    logout: 'Çıkış',
+    profile: 'Profil',
+  },
+  landing: {
+    hero_eyebrow: 'Kurumsal İş Zekası',
+    hero_title: 'Verilerinize\ndoğal dilde\nsorun.',
+    hero_title_highlight: 'doğal dilde sorun.',
+    hero_subtitle:
+      'QueryLens, ekibinizin herhangi bir veritabanını doğal dilde — herhangi bir dilde — tek satır SQL yazmadan sorgulamasını sağlar. Tamamen kendi altyapınızda çalışır.',
+    hero_cta: '14 günlük denemeyi başlat',
+    hero_secondary: 'Nasıl çalıştığını gör',
+    hero_login: 'Giriş Yap',
+
+    // Terminal demo
+    demo_label: 'querylens · canlı oturum',
+    demo_user_q: 'Geçen çeyreğe göre satışlar nasıl değişmiş, bölge bazında?',
+    demo_sql1: 'SELECT region, SUM(q2) - SUM(q1) AS delta',
+    demo_sql2: 'FROM quarterly_sales GROUP BY region',
+    demo_result: 'İstanbul +₺284K · Ankara +₺91K · İzmir −₺23K',
+
+    // Features
+    features_eyebrow: 'Yetenekler',
+    features_title: 'Hızlı cevap arayan\nekipler için tasarlandı.',
+    features_lead:
+      'Veri analistine gerek yok. SQL eğitimi yok. Sadece sorun — ve saniyeler içinde kesin, güvenilir bir cevap alın.',
+    f1_title: 'Doğal Dil Sorguları',
+    f1_desc:
+      'Bir meslektaşınıza sorar gibi sorun. QueryLens bağlamı, niyeti ve nüansı anlar — sorunuzu otomatik olarak doğru SQL\'e dönüştürür.',
+    f2_title: 'Çok Dilli Destek',
+    f2_desc:
+      'Ekibiniz kendi ana dilinde soru sorabilir. Türkçe, İngilizce, Almanca, Arapça, Japonca — QueryLens tüm önemli dilleri destekler.',
+    f3_title: 'Sıfır Konfigürasyon Kurulum',
+    f3_desc:
+      'Tek bir Docker container yeterli. Altyapı karmaşıklığı yok, BT bağımlılığı yok. Herhangi bir sunucuda 15 dakikadan kısa sürede çalışır.',
+    f4_title: 'Evrensel Veritabanı Desteği',
+    f4_desc:
+      'PostgreSQL, MySQL, Microsoft SQL Server, SQLite ve daha fazlası. Birden fazla veritabanına bağlanın ve aynı arayüzden sorunsuzca geçiş yapın.',
+    f5_title: 'Anlık Görselleştirmeler',
+    f5_desc:
+      'Sonuçlar tablo, çubuk grafik, çizgi grafik veya pasta grafik olarak otomatik olarak gösterilir. Tek tıkla CSV veya PDF\'e aktarın.',
+    f6_title: 'Veritabanı-Yerel İzinler',
+    f6_desc:
+      'QueryLens mevcut veritabanı kullanıcılarınızı kullanır. Her kullanıcı yalnızca DB hesabının izin verdiğini görür — yinelenen erişim yönetimi gerekmez.',
+
+    // How it works
+    how_eyebrow: 'Kurulum',
+    how_title: 'Dört adımda canlı.',
+    step1_title: 'İmajı çekin',
+    step1_desc:
+      'Tek bir komutla QueryLens Docker imajını sunucunuza çekin. Bağımlılık yok, yapılandırma dosyası yok.',
+    step2_title: 'Veritabanınızı bağlayın',
+    step2_desc:
+      'Bağlantı dizesini web arayüzünden girin. QueryLens şemayı okur — verileriniz sunucunuzdan asla çıkmaz.',
+    step3_title: 'Ekibinizi ekleyin',
+    step3_desc:
+      'Kullanıcı hesapları oluşturun ve her kullanıcıya ilgili veritabanı bilgilerini atayın. Erişim mevcut DB izinlerinizle yönetilir.',
+    step4_title: 'Sormaya başlayın',
+    step4_desc:
+      'Ekibiniz tarayıcıdan giriş yapar, herhangi bir dilde soru yazar ve otomatik görselleştirmelerle anlık sonuç alır.',
+
+    // Security
+    security_eyebrow: 'Veri Güvenliği',
+    security_title: 'Verilerinize\nerişimimiz yok.\nTasarım gereği.',
+    security_lead:
+      'Her SaaS aracının verilerinizi kendi sunucularında işlemek istediği bir pazarda, QueryLens tam tersi konumu alır.',
+    sec1_title: 'Tamamen kendi sunucunuzda barındırma',
+    sec1_desc:
+      'Tüm uygulama kendi sunucunuzda çalışır. Bizim tarafımızda arka plan aktarımı, veri hattı veya bulut bileşeni yoktur.',
+    sec2_title: 'Sıfır veri saklama',
+    sec2_desc:
+      'Hiçbir şey saklamayız. Sorgu günlükleri yok, sonuçlar yok, veritabanı şeması yok. Verileriniz sunucunuzda bellekte işlenir ve bize asla iletilmez.',
+    sec3_title: 'Varsayılan olarak KVKK & GDPR uyumlu',
+    sec3_desc:
+      'Verileriniz kendi altyapınızda kaldığı için, Türk KVKK ve Avrupa GDPR uyumluluğu yapısal olarak karşılanır — sadece sözleşmesel değil.',
+    sec4_title: 'Veritabanı düzeyinde erişim kontrolü',
+    sec4_desc:
+      'İzinler doğrudan veritabanı kullanıcı hesaplarınızdan miras alınır. Bir kullanıcının veritabanında erişebildiği, QueryLens üzerinden sorgulayabildiğiyle tamamen aynıdır.',
+    stat_label: 'bayt veriniz altyapımızda saklanmaz',
+    stat_note:
+      'QueryLens bir sorgu arayüzüdür, veri platformu değildir. Veritabanınız sizin sunucunuzda kalır. Yazılımımız sizin sunucunuzda çalışır. Biz hiçbir zaman veri yolundayız.',
+
+    // DB Permissions
+    db_eyebrow: 'Erişim Modeli',
+    db_title: 'Zaten sahip olduğunuz\nerişim kontrolü.',
+    db_lead:
+      'QueryLens ayrı bir izin katmanı tutmaz. Her ekip üyesi kendi veritabanı kimlik bilgileriyle bağlanır — ve yalnızca o hesabın yetkili olduğunu görür.',
+    db_lead2:
+      'Bu, mevcut veritabanı yöneticinizin erişimi kontrol ettiği anlamına gelir. Yineleme yok, sapma yok, bizim tarafımızda yanlış yapılandırma riski yok.',
+    db_note: 'QueryLens bu izinleri otomatik olarak uygular. Ek yapılandırma gerekmez.',
+
+    // Pricing
+    pricing_eyebrow: 'Fiyatlandırma',
+    pricing_title: 'Basit ve net\nfiyatlandırma.',
+    pricing_lead: 'Tek plan. Tek fiyat. Her şey dahil. Aylık veya yıllık faturalandırma.',
+    pricing_monthly: 'Aylık',
+    pricing_yearly: 'Yıllık',
+    pricing_yearly_badge: '%20 Tasarruf',
+    pro_name: 'Professional',
+    pro_tagline: 'Veri erişimine başlayan ekipler için',
+    ent_name: 'Enterprise',
+    ent_tagline: 'Tam kontrol isteyen kuruluşlar için',
+    pricing_footnote:
+      'Tüm planlar kredi kartı gerektirmeyen 14 günlük ücretsiz deneme içerir. Yıllık faturalandırma peşin olarak tahsil edilir. Özel hacim gereksinimleri veya şirket içi lisanslama için satış ekibimizle iletişime geçin.',
+
+    // CTA
+    cta_title: 'Ekibinize anlık veri\nerişimi sunmaya hazır mısınız?',
+    cta_lead: 'Dakikalar içinde kurun. SQL yok. Karmaşıklık yok. Sunucunuzdan çıkan veri yok.',
+    cta_btn: 'Demo talep edin',
+
+    // Footer
+    footer_docs: 'Dokümantasyon',
+    footer_privacy: 'Gizlilik Politikası',
+    footer_security: 'Güvenlik',
+    footer_contact: 'İletişim',
+    footer_rights: 'Tüm hakları saklıdır.',
+
+    faq_title: 'Sık Sorulan Sorular',
+  },
+  auth: {
+    email: 'E-posta',
+    password: 'Şifre',
+    confirm_password: 'Şifreyi Onayla',
+    login: 'Giriş Yap',
+    register: 'Kayıt Ol',
+    google: 'Google ile Devam Et',
+    no_account: 'Hesabın yok mu?',
+    has_account: 'Zaten hesabın var mı?',
+    sign_up: 'Kayıt Ol',
+    sign_in: 'Giriş Yap',
+    forgot_password: 'Şifremi Unuttum',
+  },
+  onboarding: {
+    step1_title: 'Profil Bilgileri',
+    step2_title: 'Agent Kurulumu',
+    step3_title: 'Veritabanı Ekle',
+    first_name: 'Ad',
+    last_name: 'Soyad',
+    age: 'Yaş',
+    gender: 'Cinsiyet',
+    next: 'İleri',
+    skip: 'Atla',
+    add: 'Ekle',
+    agent_desc: 'Agent uygulamasını indirip çalıştırın, ardından aşağıdaki kodu girin.',
+    valid_30: '30 dakika geçerlidir.',
+    copy: 'Kopyala',
+    copied: 'Kopyalandı!',
+    refresh_code: 'Kodu Yenile',
+    check_connection: 'Bağlantıyı Kontrol Et',
+    db_no_password: 'Şifre bu formda istenmez. Agent sizden soracak.',
+    display_name: 'Görünen Ad',
+    host: 'Sunucu',
+    port: 'Port',
+    database_name: 'Veritabanı Adı',
+    username: 'Kullanıcı Adı',
+    db_type: 'Veritabanı Tipi',
+    go_to_app: 'Uygulamaya Geç',
+  },
+  app: {
+    quick_query: 'Hızlı Sorgu',
+    recent_queries: 'Son Sorgular',
+    total_databases: 'Toplam Veritabanı',
+    active_connections: 'Aktif Bağlantı',
+    queries_today: 'Bugünkü Sorgu',
+    add_database: 'Veritabanı Ekle',
+    test_connection: 'Bağlantıyı Test Et',
+    delete: 'Sil',
+    edit: 'Düzenle',
+    cancel: 'İptal',
+    save: 'Kaydet',
+    status_pending: 'Bekliyor',
+    status_verified: 'Doğrulandı',
+    status_failed: 'Başarısız',
+    agent_disconnected: 'Agent\'ınız bağlı değil. Lütfen agent uygulamasını başlatın.',
+    natural_language: 'Doğal Dil',
+    raw_sql: 'Ham SQL',
+    run_query: 'Çalıştır',
+    ask_query: 'Sorgula',
+    select_db: 'Veritabanı Seçin',
+    generated_sql: 'Üretilen SQL',
+    results: 'Sonuçlar',
+    rows: 'satır',
+    ms: 'ms',
+    no_results: 'Sonuç bulunamadı.',
+    query_placeholder_nl: 'Örn: Son 7 günde kayıt olan kullanıcıları listele',
+    query_placeholder_sql: 'SELECT * FROM ...',
+    profile: 'Profil',
+    update_profile: 'Profili Güncelle',
+    delete_account: 'Hesabı Sil',
+    delete_confirm: 'Bu işlem geri alınamaz. Hesabınız kalıcı olarak silinecek.',
+    confirm: 'Onayla',
+    agent_status: 'Agent Durumu',
+    connected: 'Bağlı',
+    disconnected: 'Bağlı Değil',
+  },
+  pricing: {
+    starter: 'Starter',
+    business: 'Business',
+    enterprise: 'Enterprise',
+    free: 'Ücretsiz',
+    per_month: '/ay',
+    popular: 'En Popüler',
+    cta_starter: 'Ücretsiz Başla',
+    cta_business: 'Hemen Al',
+    cta_enterprise: 'Satışla Konuş',
+    feature_1db: '1 Veritabanı',
+    feature_10db: '10 Veritabanı',
+    feature_unlimited_db: 'Sınırsız Veritabanı',
+    feature_100q: '100 Sorgu/ay',
+    feature_5000q: '5.000 Sorgu/ay',
+    feature_unlimited_q: 'Sınırsız Sorgu',
+    feature_pg: 'Yalnızca PostgreSQL',
+    feature_all_db: 'Tüm DB Tipleri',
+    feature_community: 'Topluluk Desteği',
+    feature_email: 'E-posta Desteği',
+    feature_priority: 'Öncelikli Destek',
+    feature_sla: 'SLA Garantisi',
+    // Professional plan features
+    pro_users: '10 kullanıcıya kadar',
+    pro_db: '3 veritabanı bağlantısı',
+    pro_lang: 'Tüm desteklenen diller',
+    pro_charts: 'Grafikler & CSV dışa aktarma',
+    pro_perms: 'Veritabanı-yerel izinler',
+    pro_support: 'E-posta desteği',
+    pro_cta: 'Ücretsiz denemeyi başlat',
+    // Enterprise plan features
+    ent_users: 'Sınırsız kullanıcı',
+    ent_db: 'Sınırsız veritabanı bağlantısı',
+    ent_lang: 'Tüm desteklenen diller',
+    ent_dash: 'Gelişmiş panolar & PDF dışa aktarma',
+    ent_perms: 'Veritabanı-yerel izinler',
+    ent_audit: 'Sorgu denetim günlükleri',
+    ent_support: 'Öncelikli destek & SLA',
+    ent_onboard: 'Özel kurulum desteği',
+    ent_cta: 'Satışla iletişime geçin',
+  },
+  errors: {
+    required: 'Bu alan zorunludur.',
+    invalid_email: 'Geçerli bir e-posta girin.',
+    password_min: 'Şifre en az 8 karakter olmalıdır.',
+    password_mismatch: 'Şifreler uyuşmuyor.',
+    age_invalid: 'Lütfen geçerli bir yaş girin (0–150).',
+    server_error: 'Bir hata oluştu. Lütfen tekrar deneyin.',
+    agent_disconnected: 'Agent bağlı değil.',
+    timeout: 'İstek zaman aşımına uğradı (60 sn).',
+    query_error: 'SQL hatası oluştu.',
+  },
+  common: {
+    loading: 'Yükleniyor...',
+    success: 'Başarılı!',
+    error: 'Hata',
+    back: 'Geri',
+    close: 'Kapat',
+    language: 'Dil',
+  },
+};
+
+export type TranslationKeys = typeof tr;

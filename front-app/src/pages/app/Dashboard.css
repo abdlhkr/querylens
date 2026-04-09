@@ -1,0 +1,87 @@
+/* ─── Dashboard Stats ─────────────────────────────────────────────────────── */
+.stat-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: #fff;
+  border: 1px solid var(--border-light);
+  transition: var(--transition);
+}
+
+.stat-card:hover {
+  border-color: var(--border-mid);
+  background: var(--bg-secondary);
+}
+
+.stat-icon-wrap {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* Icon colors aligned to ink/gold palette */
+.color-bg-purple {
+  background: var(--gold-pale);
+  color: var(--gold);
+}
+.color-bg-green {
+  background: rgba(22, 163, 74, 0.1);
+  color: var(--success);
+}
+.color-bg-blue {
+  background: rgba(37, 99, 235, 0.08);
+  color: var(--info);
+}
+
+.stat-label {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  font-weight: 500;
+  color: var(--text-subtle);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+
+.stat-value {
+  font-family: var(--font-serif);
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.5px;
+  line-height: 1;
+}
+
+.dash-stats { margin-bottom: 28px; }
+
+/* ─── Quick Action Cards ──────────────────────────────────────────────────── */
+.quick-action-card {
+  background: #fff;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  transition: var(--transition);
+}
+.quick-action-card:hover {
+  border-color: var(--border-mid);
+  background: var(--bg-secondary);
+}
+.quick-action-title {
+  font-family: var(--font-serif);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 8px;
+  letter-spacing: -0.3px;
+}
+.quick-action-desc {
+  font-size: 13px;
+  font-weight: 300;
+  color: var(--text-muted);
+  margin-bottom: 18px;
+  line-height: 1.5;
+}
