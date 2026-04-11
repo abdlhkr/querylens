@@ -249,6 +249,7 @@ export const tr = {
     agent_disconnected: 'Agent bağlı değil.',
     timeout: 'İstek zaman aşımına uğradı (60 sn).',
     query_error: 'SQL hatası oluştu.',
+    duplicate_email: 'Bu e-posta zaten kayıtlı.',
   },
   common: {
     loading: 'Yükleniyor...',

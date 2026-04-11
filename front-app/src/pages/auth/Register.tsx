@@ -35,8 +35,14 @@ export default function Register() {
       await authApi.register({ email: form.email, password: form.password });
       navigate('/onboarding');
     } catch (err: any) {
-      const msg = err?.response?.data?.message ?? t('errors.server_error');
-      toast.error(msg);
+      const status = err?.response?.status;
+      const msg = err?.response?.data?.message ?? err?.message ?? t('errors.server_error');
+
+      if (status === 409) {
+        toast.error(msg || t('errors.duplicate_email'));
+      } else {
+        toast.error(msg);
+      }
     } finally {
       setLoading(false);
     }

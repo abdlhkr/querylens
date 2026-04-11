@@ -249,6 +249,7 @@ export const en = {
     agent_disconnected: 'Agent is not connected.',
     timeout: 'Request timed out (60s).',
     query_error: 'SQL error occurred.',
+    duplicate_email: 'This email is already registered.',
   },
   common: {
     loading: 'Loading...',
