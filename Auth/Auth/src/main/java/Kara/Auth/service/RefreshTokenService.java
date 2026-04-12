@@ -47,8 +47,14 @@ public class RefreshTokenService {
         return refreshToken;
     }
 
-    public boolean deleteRefreshToken(RefreshToken refreshToken) {
-        refreshTokenRepository.delete(refreshToken);
-        return true;
+    @Transactional
+    public boolean deleteRefreshToken(String refreshToken) {
+        Optional<RefreshToken> token = refreshTokenRepository.findByToken(refreshToken);
+        if (token.isPresent()) {
+            refreshTokenRepository.delete(token.get());
+            refreshTokenRepository.flush();
+            return true;
+        }
+        return false;
     }
 }

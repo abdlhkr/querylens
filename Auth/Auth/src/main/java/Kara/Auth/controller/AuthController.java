@@ -4,6 +4,7 @@ import Kara.Auth.dto.AuthResponse;
 import Kara.Auth.dto.LoginRequest;
 import Kara.Auth.dto.RegisterRequest;
 import Kara.Auth.service.AuthService;
+import Kara.Auth.service.RefreshTokenService;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,6 +22,8 @@ import java.time.Duration;
 public class AuthController {
 
     private final AuthService authService;
+    private final RefreshTokenService refreshTokenService;
+
 
     @Value("${jwt.expiration}")
     private long accessTokenExpiration;
@@ -59,7 +62,9 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<AuthResponse> logout(HttpServletResponse response) {
+    public ResponseEntity<AuthResponse> logout(HttpServletResponse response,
+                                               @CookieValue(name = "refresh_token") String refreshToken) {
+        refreshTokenService.deleteRefreshToken(refreshToken);
         ResponseCookie clearAccess = ResponseCookie.from("access_token", "")
                 .httpOnly(true)
                 .secure(false)
@@ -78,6 +83,7 @@ public class AuthController {
 
         response.addHeader(HttpHeaders.SET_COOKIE, clearAccess.toString());
         response.addHeader(HttpHeaders.SET_COOKIE, clearRefresh.toString());
+
         return ResponseEntity.ok(new AuthResponse("Logged out"));
     }
 

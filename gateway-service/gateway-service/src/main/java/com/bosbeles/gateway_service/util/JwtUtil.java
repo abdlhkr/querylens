@@ -20,6 +20,7 @@ public class JwtUtil {
         SecretKey secretKey = Keys.hmacShaKeyFor(SECRET_KEY.getBytes(StandardCharsets.UTF_8));
         this.jwtParser = Jwts.parser()
                 .verifyWith(secretKey)
+                .requireIssuer("auth-service")
                 .build();
     }
 
