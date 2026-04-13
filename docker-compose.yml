@@ -108,6 +108,15 @@ services:
       - auth-service
       - user-service
       - db-service
+      - redis
+    networks:
+      - saas-net
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
     networks:
       - saas-net
 

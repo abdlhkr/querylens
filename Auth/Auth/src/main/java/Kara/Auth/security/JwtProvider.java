@@ -16,6 +16,9 @@ import java.util.UUID;
 public class JwtProvider {
     private final Long expiration; // 15 dakika şimdilik
     // burda eğer long kullanımı istenirse o zaman constructer injection ile
+    @Value("${jwt.secret}")
+    private String secret_key;
+
 
     public JwtProvider(@Value("${jwt.expiration}") Long expiration) {
         this.expiration = expiration;
@@ -37,7 +40,7 @@ public class JwtProvider {
     }
 
     private SecretKey getSignInKey() {
-        String secret_key = "?Q>9eSwc2#@HRt(C<z/0YZ[3yH-GIbdL9/o&#-MV}Wl)3ssgXHyq4(^.M9KJ1dK%qvWv0Bq.X-^LJq?@IVR>jF";
+
         byte[] keyBytes = secret_key.getBytes(java.nio.charset.StandardCharsets.UTF_8);
         return Keys.hmacShaKeyFor(keyBytes);
     }
