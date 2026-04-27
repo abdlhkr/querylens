@@ -78,6 +78,9 @@ export interface QueryResult {
 export interface NaturalLanguageQueryResult extends QueryResult {
   question: string;
   generatedSql: string;
+  responseType?: 'sql' | 'unavailable' | 'general' | null;
+  aiMessage?: string | null;
+  suggestedQuestion?: string | null;
 }
 
 export interface NaturalLanguageRequest {

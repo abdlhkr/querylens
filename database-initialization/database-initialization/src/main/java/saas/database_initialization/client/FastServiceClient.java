@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
+import saas.database_initialization.dto.query.FastServiceAnalysisResult;
 import saas.database_initialization.exception.BadRequestException;
 
 import java.util.Map;
@@ -14,7 +15,7 @@ import java.util.Map;
  *
  * Endpoint used: POST /query/
  * Body: { "db_type": "...", "db_scheme": "...", "question": "..." }
- * Response: { "success": true, "data": { "sql_query": "..." } }
+ * Response: { "success": true, "data": { "type": "sql"|"unavailable"|"general", ... } }
  */
 @Slf4j
 @Component
@@ -29,15 +30,16 @@ public class FastServiceClient {
     }
 
     /**
-     * Calls fast_service to generate a SQL query from a natural language question.
+     * Calls fast_service /query/ which now runs the analyzer before SQL generation.
+     * Returns a result with type="sql", "unavailable", or "general".
      *
      * @param dbType   e.g. "POSTGRESQL"
      * @param dbScheme plain-text schema from introspection results
      * @param question natural language question from the user
-     * @return generated SQL query string
+     * @return {@link FastServiceAnalysisResult} with type and relevant fields populated
      */
-    public String generateSql(String dbType, String dbScheme, String question) {
-        log.info("Calling fast_service to generate SQL for question: {}", question);
+    public FastServiceAnalysisResult analyzeQuery(String dbType, String dbScheme, String question) {
+        log.info("Calling fast_service to analyze question: {}", question);
 
         Map<String, String> requestBody = Map.of(
                 "db_type", dbType,
@@ -66,13 +68,20 @@ public class FastServiceClient {
 
             @SuppressWarnings("unchecked")
             Map<String, Object> data = (Map<String, Object>) response.get("data");
-            if (data == null || !data.containsKey("sql_query")) {
-                throw new BadRequestException("fast_service response missing sql_query field");
+            if (data == null || !data.containsKey("type")) {
+                throw new BadRequestException("fast_service response missing type field");
             }
 
-            String sql = (String) data.get("sql_query");
-            log.info("fast_service generated SQL: {}", sql);
-            return sql;
+            String type = (String) data.get("type");
+            FastServiceAnalysisResult result = FastServiceAnalysisResult.builder()
+                    .type(type)
+                    .sql((String) data.get("sql"))
+                    .message((String) data.get("message"))
+                    .suggestedQuestion((String) data.get("suggestedQuestion"))
+                    .build();
+
+            log.info("fast_service analysis type: {}", type);
+            return result;
 
         } catch (BadRequestException e) {
             throw e;

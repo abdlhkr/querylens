@@ -1,29 +1,60 @@
 from fastapi import APIRouter
-from fastapi.responses import JSONResponse
 
 from core.exceptions import InvalidInputError, LLMProviderError, QueryGenerationError
-from schemas.query import QueryRequest, QueryResponse
+from schemas.analyzer import (
+    GeneralQueryResponse,
+    SqlQueryResponse,
+    UnavailableQueryResponse,
+)
 from schemas.fix_query import FixQueryRequest, FixQueryResponse
+from schemas.query import QueryRequest, QueryResponse
 from schemas.response import ApiResponse
-from services.query_service import QueryService
+from services.analyzer_service import AnalyzerService
 from services.fix_query_service import FixQueryService
+from services.query_service import QueryService
 
 router = APIRouter(prefix="/query", tags=["Query"])
 
 _service = QueryService()
 _fix_service = FixQueryService()
+_analyzer = AnalyzerService()
 
 
 @router.post(
     "/",
-    response_model=ApiResponse[QueryResponse],
     summary="SQL sorgusu üret",
-    description="Verilen veritabanı tipi, şema ve soru bilgisiyle bir SELECT sorgusu üretir.",
+    description="Soruyu önce analiz eder; şemada yanıtlanabilirse SELECT sorgusu üretir.",
 )
-async def generate_query(request: QueryRequest) -> ApiResponse[QueryResponse]:
+async def generate_query(request: QueryRequest):
     try:
-        sql = _service.generate_query(request)
-        return ApiResponse.ok(data=QueryResponse(sql_query=sql))
+        analysis = _analyzer.analyze(request.question, request.db_type, request.db_scheme)
+
+        if analysis.case == 1:
+            rephrased = QueryRequest(
+                db_type=request.db_type,
+                db_scheme=request.db_scheme,
+                question=analysis.rephrasedQuestion or request.question,
+            )
+            sql = _service.generate_query(rephrased)
+            return ApiResponse.ok(data=SqlQueryResponse(sql=sql, analysis=analysis))
+
+        elif analysis.case == 2:
+            return ApiResponse.ok(
+                data=UnavailableQueryResponse(
+                    message=analysis.userMessage,
+                    suggestedQuestion=analysis.suggestedQuestion,
+                    analysis=analysis,
+                )
+            )
+
+        else:  # case 3
+            return ApiResponse.ok(
+                data=GeneralQueryResponse(
+                    message=analysis.userMessage,
+                    analysis=analysis,
+                )
+            )
+
     except (LLMProviderError, QueryGenerationError, InvalidInputError):
         raise  # global handler devralır
 

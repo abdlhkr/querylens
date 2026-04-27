@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import saas.database_initialization.client.FastServiceClient;
+import saas.database_initialization.dto.query.FastServiceAnalysisResult;
 import saas.database_initialization.dto.query.NaturalLanguageQueryResponse;
 import saas.database_initialization.entity.DatabaseConnection;
 import saas.database_initialization.entity.IntrospectionResult;
@@ -89,9 +90,33 @@ public class NaturalLanguageQueryService {
                             "Please wait for introspection to complete or re-verify your database.");
         }
 
-        // 3. Call fast_service to generate initial SQL
+        // 3. Call fast_service analyzer + conditional SQL generation
         String dbType = connection.getDbType().name();
-        String rawSql = fastServiceClient.generateSql(dbType, dbScheme, question);
+        FastServiceAnalysisResult analysisResult = fastServiceClient.analyzeQuery(dbType, dbScheme, question);
+
+        if ("unavailable".equals(analysisResult.getType())) {
+            return NaturalLanguageQueryResponse.builder()
+                    .databaseId(databaseId)
+                    .question(question)
+                    .responseType("unavailable")
+                    .aiMessage(analysisResult.getMessage())
+                    .suggestedQuestion(analysisResult.getSuggestedQuestion())
+                    .success(true)
+                    .build();
+        }
+
+        if ("general".equals(analysisResult.getType())) {
+            return NaturalLanguageQueryResponse.builder()
+                    .databaseId(databaseId)
+                    .question(question)
+                    .responseType("general")
+                    .aiMessage(analysisResult.getMessage())
+                    .success(true)
+                    .build();
+        }
+
+        // Case 1: type="sql" — proceed with execution pipeline
+        String rawSql = analysisResult.getSql();
         String normalizedSql = normalizeSql(rawSql);
         log.info("Initial SQL for execution: {}", normalizedSql);
 

@@ -31,4 +31,9 @@ public class NaturalLanguageQueryResponse {
     // Result data (when success = true)
     private List<Map<String, Object>> data;
     private int rowCount;
+
+    // Analyzer layer fields (populated when the question is not directly answerable by SQL)
+    private String responseType;      // "sql", "unavailable", or "general"
+    private String aiMessage;         // message for the user when responseType is "unavailable" or "general"
+    private String suggestedQuestion; // alternative question suggestion when responseType is "unavailable"
 }

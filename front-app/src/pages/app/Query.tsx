@@ -142,16 +142,43 @@ export default function Query() {
         {!loading && <><Play size={15} /> {tab === 'nl' ? t('app.ask_query') : t('app.run_query')}</>}
       </button>
 
-      {/* NL: Generated SQL */}
-      {tab === 'nl' && result && 'generatedSql' in result && result.generatedSql && (
+      {/* NL: Generated SQL (only for sql-type responses) */}
+      {tab === 'nl' && result && 'generatedSql' in result && result.generatedSql &&
+        (result as NaturalLanguageQueryResult).responseType !== 'unavailable' &&
+        (result as NaturalLanguageQueryResult).responseType !== 'general' && (
         <div style={{ marginBottom: '20px' }}>
           <p className="result-label">{t('app.generated_sql')}</p>
           <div className="code-block">{result.generatedSql}</div>
         </div>
       )}
 
-      {/* Results */}
-      {result && (
+      {/* NL: Analyzer message for unavailable / general cases */}
+      {tab === 'nl' && result && 'responseType' in result &&
+        ((result as NaturalLanguageQueryResult).responseType === 'unavailable' ||
+         (result as NaturalLanguageQueryResult).responseType === 'general') && (
+        <div className="card" style={{ padding: '20px', marginBottom: '20px' }}>
+          <div style={{ marginBottom: '12px', color: 'var(--text-primary)', fontSize: '14px', whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>
+            {(result as NaturalLanguageQueryResult).aiMessage}
+          </div>
+          {(result as NaturalLanguageQueryResult).responseType === 'unavailable' &&
+            (result as NaturalLanguageQueryResult).suggestedQuestion && (
+            <button
+              className="btn btn-secondary"
+              style={{ fontSize: '13px', marginTop: '8px' }}
+              onClick={() => setQuestion((result as NaturalLanguageQueryResult).suggestedQuestion!)}
+            >
+              {(result as NaturalLanguageQueryResult).suggestedQuestion}
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Results (SQL execution results only) */}
+      {result && !(
+        'responseType' in result &&
+        ((result as NaturalLanguageQueryResult).responseType === 'unavailable' ||
+         (result as NaturalLanguageQueryResult).responseType === 'general')
+      ) && (
         <div>
           <div className="result-meta">
             <p className="result-label">{t('app.results')}</p>
