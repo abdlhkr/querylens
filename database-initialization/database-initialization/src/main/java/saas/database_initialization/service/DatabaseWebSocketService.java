@@ -15,6 +15,7 @@ import saas.database_initialization.exception.ResourceNotFoundException;
 import saas.database_initialization.repository.DeviceRepository;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -135,6 +136,45 @@ public class DatabaseWebSocketService {
         }
 
         return future;
+    }
+
+    /**
+     * Re-send NEW_DATABASE for all existing connections after agent reconnects.
+     * Resets each connection to PENDING so the agent re-verifies using its stored credentials.
+     */
+    public void notifyExistingDatabases(Device device) {
+        List<DatabaseConnection> connections =
+                databaseConnectionService.getDeviceConnections(device.getRegisteredDeviceID());
+
+        if (connections.isEmpty()) {
+            log.info("No existing databases to notify for device: {}", device.getRegisteredDeviceID());
+            return;
+        }
+
+        WebSocketSession session = activeSessions.get(device.getConnectionId());
+        if (session == null || !session.isOpen()) {
+            log.warn("Session not found for device: {}", device.getRegisteredDeviceID());
+            return;
+        }
+
+        for (DatabaseConnection conn : connections) {
+            try {
+                databaseConnectionService.resetToPending(conn.getId());
+
+                NewDatabaseMessage message = NewDatabaseMessage.create(
+                        conn.getId(),
+                        conn.getHost(),
+                        conn.getPort(),
+                        conn.getDatabaseName(),
+                        conn.getUsername(),
+                        conn.getDbType());
+
+                sendMessage(session, message);
+                log.info("Re-sent NEW_DATABASE for existing connection: {}", conn.getId());
+            } catch (Exception e) {
+                log.error("Failed to re-notify database: {}", conn.getId(), e);
+            }
+        }
     }
 
     /**

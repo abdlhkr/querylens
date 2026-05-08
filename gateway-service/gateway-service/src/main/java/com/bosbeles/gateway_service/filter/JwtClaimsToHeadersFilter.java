@@ -27,7 +27,10 @@ public class JwtClaimsToHeadersFilter implements GlobalFilter, Ordered {
         // Skip validation for auth endpoints and OAuth2 callback paths
         // /login/oauth2/** → Google callback (kod bu path'e döner, henüz cookie yoktur)
         // /oauth2/** → Spring Security'nin Google'a yönlendirme path'i
-        if (path.startsWith("/auth/")
+        if (path.startsWith("/auth/login")
+                || path.startsWith("/auth/register")
+                || path.startsWith("/auth/refresh")
+                || path.startsWith("/auth/logout")
                 || path.startsWith("/ws/device")
                 || path.startsWith("/login/oauth2/")
                 || path.startsWith("/oauth2/")) {

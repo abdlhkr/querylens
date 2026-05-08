@@ -1,8 +1,13 @@
 package Kara.Auth.controller;
 
 import Kara.Auth.dto.AuthResponse;
+import Kara.Auth.dto.ForgotPasswordRequest;
 import Kara.Auth.dto.LoginRequest;
+import Kara.Auth.dto.LoginVerifyRequest;
 import Kara.Auth.dto.RegisterRequest;
+import Kara.Auth.dto.RegisterVerifyRequest;
+import Kara.Auth.dto.ResetPasswordRequest;
+import Kara.Auth.service.AccountService;
 import Kara.Auth.service.AuthService;
 import Kara.Auth.service.RefreshTokenService;
 import jakarta.servlet.http.HttpServletResponse;
@@ -23,6 +28,7 @@ public class AuthController {
 
     private final AuthService authService;
     private final RefreshTokenService refreshTokenService;
+    private final AccountService accountService;
 
 
     @Value("${jwt.expiration}")
@@ -32,19 +38,43 @@ public class AuthController {
     private long refreshTokenExpiration;
 
     @PostMapping("/register")
-    public ResponseEntity<AuthResponse> register(@RequestBody RegisterRequest registerRequest,
-            HttpServletResponse response) {
-        AuthService.TokenPair tokens = authService.register(registerRequest);
+    public ResponseEntity<AuthResponse> register(@RequestBody RegisterRequest req) {
+        authService.initiateRegister(req);
+        return ResponseEntity.accepted().body(new AuthResponse("Verification code sent to " + req.getEmail()));
+    }
+
+    @PostMapping("/register/verify")
+    public ResponseEntity<AuthResponse> verifyRegister(@RequestBody RegisterVerifyRequest req,
+                                                       HttpServletResponse response) {
+        AuthService.TokenPair tokens = authService.verifyRegister(req.getEmail(), req.getCode());
         addTokenCookies(response, tokens);
         return ResponseEntity.ok(new AuthResponse("Registration successful"));
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest loginRequest,
-            HttpServletResponse response) {
-        AuthService.TokenPair tokens = authService.login(loginRequest);
+    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest req) {
+        authService.initiateLogin(req);
+        return ResponseEntity.accepted().body(new AuthResponse("Verification code sent to " + req.getEmail()));
+    }
+
+    @PostMapping("/login/verify")
+    public ResponseEntity<AuthResponse> verifyLogin(@RequestBody LoginVerifyRequest req,
+                                                    HttpServletResponse response) {
+        AuthService.TokenPair tokens = authService.verifyLogin(req.getEmail(), req.getCode());
         addTokenCookies(response, tokens);
         return ResponseEntity.ok(new AuthResponse("Login successful"));
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<AuthResponse> forgotPassword(@RequestBody ForgotPasswordRequest req) {
+        accountService.initiateForgotPassword(req.getEmail());
+        return ResponseEntity.accepted().body(new AuthResponse("Şifre sıfırlama kodu e-postanıza gönderildi"));
+    }
+
+    @PostMapping("/forgot-password/reset")
+    public ResponseEntity<AuthResponse> resetPassword(@RequestBody ResetPasswordRequest req) {
+        accountService.resetPassword(req.getEmail(), String.format("%06d", req.getCode()), req.getNewPassword());
+        return ResponseEntity.ok(new AuthResponse("Şifreniz başarıyla sıfırlandı"));
     }
 
     @PostMapping("/refresh")

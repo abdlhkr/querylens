@@ -56,6 +56,8 @@ public class DeviceWebSocketHandler extends TextWebSocketHandler {
 
             Device device;
 
+            boolean isReconnection = deviceId != null;
+
             if (code != null) {
                 // First connection with registration code
                 device = handleFirstConnection(code, session.getId());
@@ -76,6 +78,11 @@ public class DeviceWebSocketHandler extends TextWebSocketHandler {
             // Send confirmation message
             sendConfirmation(session, device);
             log.info("Device {} connected successfully", device.getRegisteredDeviceID());
+
+            // On reconnect, re-send existing databases so agent re-verifies with stored credentials
+            if (isReconnection) {
+                databaseWebSocketService.notifyExistingDatabases(device);
+            }
 
         } catch (BadRequestException | ResourceNotFoundException e) {
             log.warn("Connection failed: {}", e.getMessage());

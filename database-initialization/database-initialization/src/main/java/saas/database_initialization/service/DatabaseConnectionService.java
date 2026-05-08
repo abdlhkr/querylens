@@ -200,6 +200,19 @@ public class DatabaseConnectionService {
     }
 
     /**
+     * Reset connection status to PENDING (called before re-sending NEW_DATABASE on agent reconnect)
+     */
+    public void resetToPending(UUID connectionId) {
+        DatabaseConnection connection = repository.findById(connectionId)
+                .orElseThrow(() -> new ResourceNotFoundException("Database connection not found"));
+
+        connection.setStatus(ConnectionStatus.PENDING);
+        connection.setVerifiedAt(null);
+        repository.save(connection);
+        log.info("Connection reset to PENDING: {}", connectionId);
+    }
+
+    /**
      * Update last used timestamp
      */
     public void updateLastUsed(UUID connectionId) {

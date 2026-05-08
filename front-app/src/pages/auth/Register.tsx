@@ -33,7 +33,7 @@ export default function Register() {
     setLoading(true);
     try {
       await authApi.register({ email: form.email, password: form.password });
-      navigate('/onboarding');
+      navigate('/auth/verify', { state: { email: form.email, type: 'register' } });
     } catch (err: any) {
       const status = err?.response?.status;
       const msg = err?.response?.data?.message ?? err?.message ?? t('errors.server_error');

@@ -29,11 +29,15 @@ class DatabaseManager {
         const keyFile = path.join(process.cwd(), '.agent_key');
 
         if (fs.existsSync(keyFile)) {
-            return fs.readFileSync(keyFile, 'utf-8');
+            const content = fs.readFileSync(keyFile, 'utf-8').trim();
+            if (content.length === 32) {
+                return content;
+            }
+            // File exists but empty or corrupted — regenerate
+            logger.warn('Agent key file invalid, regenerating', { keyFile });
         }
 
-        // Generate new key based on machine ID
-        const machineId = require('os').hostname() + process.env.USERNAME || 'default';
+        const machineId = require('os').hostname() + (process.env.USERNAME || 'default');
         const key = crypto.createHash('sha256').update(machineId + 'agent-salt').digest('hex').substring(0, 32);
         fs.writeFileSync(keyFile, key, { mode: 0o600 });
 
@@ -45,17 +49,19 @@ class DatabaseManager {
      */
     loadCredentials() {
         try {
-            if (fs.existsSync(this.credentialsFile)) {
-                const encrypted = fs.readFileSync(this.credentialsFile, 'utf-8');
-                const decrypted = this.decrypt(encrypted);
-                const credentials = JSON.parse(decrypted);
+            if (!fs.existsSync(this.credentialsFile)) return;
 
-                for (const [databaseId, cred] of Object.entries(credentials)) {
-                    this.databases.set(databaseId, cred);
-                }
+            const encrypted = fs.readFileSync(this.credentialsFile, 'utf-8').trim();
+            if (!encrypted) return;
 
-                logger.info('Loaded database credentials', { count: this.databases.size });
+            const decrypted = this.decrypt(encrypted);
+            const credentials = JSON.parse(decrypted);
+
+            for (const [databaseId, cred] of Object.entries(credentials)) {
+                this.databases.set(databaseId, cred);
             }
+
+            logger.info('Loaded database credentials', { count: this.databases.size });
         } catch (error) {
             logger.warn('Failed to load credentials', { error: error.message });
         }
@@ -110,6 +116,31 @@ class DatabaseManager {
      */
     async handleNewDatabase(message) {
         const { databaseId, host, port, databaseName, username, dbType } = message;
+
+        // Use existing credentials if available (e.g. after agent reconnect)
+        const existing = this.databases.get(databaseId);
+        if (existing) {
+            logger.info('🔄 Mevcut credentials kullanılıyor, şifre sorulmayacak', { databaseId });
+
+            const testResult = await this.connectionPool.testConnection(
+                { host, port, databaseName, username, dbType },
+                existing.password
+            );
+
+            if (testResult.success) {
+                this.databases.set(databaseId, {
+                    ...existing,
+                    host, port, databaseName, username, dbType,
+                    verifiedAt: new Date().toISOString()
+                });
+                this.saveCredentials();
+                logger.info('✅ Database yeniden doğrulandı', { databaseId });
+                return { success: true, databaseId };
+            } else {
+                logger.error('❌ Mevcut credentials ile bağlantı başarısız', { error: testResult.error });
+                return { success: false, error: testResult.error };
+            }
+        }
 
         logger.info('📂 Yeni database eklendi, doğrulama bekleniyor', {
             databaseId,

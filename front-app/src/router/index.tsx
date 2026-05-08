@@ -6,6 +6,8 @@ import { ProtectedRoute, PublicOnlyRoute } from './guards';
 const Landing = lazy(() => import('../pages/Landing'));
 const Login = lazy(() => import('../pages/auth/Login'));
 const Register = lazy(() => import('../pages/auth/Register'));
+const VerifyCode = lazy(() => import('../pages/auth/VerifyCode'));
+const ForgotPassword = lazy(() => import('../pages/auth/ForgotPassword'));
 const Onboarding = lazy(() => import('../pages/Onboarding'));
 const AppLayout = lazy(() => import('../components/layout/AppLayout'));
 const Dashboard = lazy(() => import('../pages/app/Dashboard'));
@@ -44,6 +46,22 @@ const router = createBrowserRouter([
         element: (
           <Suspense fallback={<PageLoader />}>
             <Register />
+          </Suspense>
+        ),
+      },
+      {
+        path: '/auth/verify',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <VerifyCode />
+          </Suspense>
+        ),
+      },
+      {
+        path: '/auth/forgot-password',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <ForgotPassword />
           </Suspense>
         ),
       },

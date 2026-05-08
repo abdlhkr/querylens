@@ -27,7 +27,8 @@ STRICT RULES:
 7. DO NOT include explanations.
 8. DO NOT include markdown.
 9. DO NOT include code fences.
-10. DO NOT include any text before or after the query.
+10. Make sure to provide an alias for each selected column in the same language as the user's question.
+11. DO NOT include any text before or after the query.
 Output format:
 SELECT ...;
 

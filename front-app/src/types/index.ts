@@ -10,6 +10,11 @@ export interface AuthResponse {
   message: string;
 }
 
+export interface AccountStatus {
+  passwordSet: boolean;
+  email: string;
+}
+
 // ─── User ──────────────────────────────────────────────────────────────────
 export type Gender = 'MALE' | 'FEMALE' | 'OTHER';
 

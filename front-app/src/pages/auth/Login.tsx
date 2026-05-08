@@ -30,15 +30,7 @@ export default function Login() {
     setLoading(true);
     try {
       await authApi.login(form);
-      // Check if profile exists
-      const { usersApi } = await import('../../api/users');
-      try {
-        await usersApi.getMe();
-        navigate('/app');
-      } catch (err: any) {
-        if (err?.response?.status === 404) navigate('/onboarding');
-        else navigate('/app');
-      }
+      navigate('/auth/verify', { state: { email: form.email, type: 'login' } });
     } catch (err: any) {
       const msg = err?.response?.data?.message ?? t('errors.server_error');
       toast.error(msg);
@@ -110,6 +102,12 @@ export default function Login() {
           >
             {!loading && t('auth.login')}
           </button>
+
+          <div style={{ textAlign: 'right', marginTop: '-4px' }}>
+            <Link to="/auth/forgot-password" className="auth-link" style={{ fontSize: '13px' }}>
+              {t('auth.forgot_password_link')}
+            </Link>
+          </div>
         </form>
 
         <div className="divider">{t('auth.google').split(' ')[0].toLowerCase() === 'continue' ? 'or' : 'veya'}</div>
