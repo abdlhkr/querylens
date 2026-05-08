@@ -5,9 +5,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
+import saas.database_initialization.dto.query.ChartRecommendResponse;
 import saas.database_initialization.dto.query.FastServiceAnalysisResult;
 import saas.database_initialization.exception.BadRequestException;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -148,6 +150,60 @@ public class FastServiceClient {
         } catch (Exception e) {
             log.error("Failed to call fast_service for fix", e);
             throw new BadRequestException("Failed to reach fast_service for fix: " + e.getMessage());
+        }
+    }
+
+    public ChartRecommendResponse recommendChart(String question,
+                                                  List<String> columns,
+                                                  List<Map<String, Object>> sampleRows) {
+        log.info("Calling fast_service /chart/recommend for question: {}", question);
+
+        List<Map<String, Object>> trimmed = sampleRows != null
+                ? sampleRows.subList(0, Math.min(5, sampleRows.size()))
+                : List.of();
+
+        Map<String, Object> requestBody = Map.of(
+                "question", question,
+                "columns", columns,
+                "sample_rows", trimmed);
+
+        try {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> response = webClient.post()
+                    .uri("/chart/recommend")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(requestBody)
+                    .retrieve()
+                    .bodyToMono(Map.class)
+                    .block();
+
+            if (response == null) {
+                throw new BadRequestException("fast_service returned empty response for chart recommend");
+            }
+
+            Boolean success = (Boolean) response.get("success");
+            if (Boolean.FALSE.equals(success)) {
+                throw new BadRequestException("fast_service chart error: " + response.get("error"));
+            }
+
+            @SuppressWarnings("unchecked")
+            Map<String, Object> data = (Map<String, Object>) response.get("data");
+
+            @SuppressWarnings("unchecked")
+            List<String> valueFields = (List<String>) data.get("valueFields");
+
+            return ChartRecommendResponse.builder()
+                    .chartType((String) data.get("chartType"))
+                    .keyField((String) data.get("keyField"))
+                    .valueFields(valueFields)
+                    .reason((String) data.get("reason"))
+                    .build();
+
+        } catch (BadRequestException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Failed to call fast_service /chart/recommend", e);
+            throw new BadRequestException("Failed to reach fast_service for chart: " + e.getMessage());
         }
     }
 }

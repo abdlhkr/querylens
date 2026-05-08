@@ -86,3 +86,19 @@ export interface NaturalLanguageQueryResult extends QueryResult {
 export interface NaturalLanguageRequest {
   question: string;
 }
+
+// ─── Chart Visualization ────────────────────────────────────────────────────
+export type ChartType = 'bar' | 'line' | 'pie' | 'area';
+
+export interface ChartRecommendRequest {
+  question: string;
+  columns: string[];
+  sampleRows: Record<string, unknown>[];
+}
+
+export interface ChartRecommendResponse {
+  chartType: ChartType;
+  keyField: string;
+  valueFields: string[];
+  reason: string;
+}

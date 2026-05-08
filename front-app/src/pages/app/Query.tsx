@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Play, MessageSquare, Code2, AlertTriangle } from 'lucide-react';
+import { Play, MessageSquare, Code2, AlertTriangle, BarChart2, Table } from 'lucide-react';
 import Editor from '@monaco-editor/react';
 import { devicesApi } from '../../api/devices';
-import type { DatabaseConnection, QueryResult, NaturalLanguageQueryResult } from '../../types';
+import type { ChartRecommendResponse, DatabaseConnection, NaturalLanguageQueryResult, QueryResult } from '../../types';
+import QueryChart from '../../components/ui/QueryChart';
 import toast from 'react-hot-toast';
 import './Query.css';
 
@@ -17,6 +18,9 @@ export default function Query() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<QueryResult | NaturalLanguageQueryResult | null>(null);
   const [agentError, setAgentError] = useState(false);
+  const [chartView, setChartView] = useState(false);
+  const [chartRec, setChartRec] = useState<ChartRecommendResponse | null>(null);
+  const [chartLoading, setChartLoading] = useState(false);
 
   useEffect(() => {
     devicesApi.getDatabases()
@@ -28,9 +32,31 @@ export default function Query() {
       .catch(() => {});
   }, []);
 
+  const visualize = async () => {
+    if (!result?.data || result.data.length === 0) return;
+    setChartLoading(true);
+    try {
+      const cols = Object.keys(result.data[0]);
+      const questionText = tab === 'nl' ? question : sql;
+      const res = await devicesApi.recommendChart({
+        question: questionText,
+        columns: cols,
+        sampleRows: result.data.slice(0, 5) as Record<string, unknown>[],
+      });
+      if (res.data.data) {
+        setChartRec(res.data.data);
+        setChartView(true);
+      }
+    } catch {
+      toast.error(t('errors.server_error'));
+    } finally {
+      setChartLoading(false);
+    }
+  };
+
   const runNL = async () => {
     if (!selectedDb || !question.trim()) return;
-    setLoading(true); setResult(null); setAgentError(false);
+    setLoading(true); setResult(null); setAgentError(false); setChartView(false); setChartRec(null);
     try {
       const res = await devicesApi.naturalLanguageQuery(selectedDb, { question });
       const data = res.data.data;
@@ -45,7 +71,7 @@ export default function Query() {
 
   const runSQL = async () => {
     if (!selectedDb || !sql.trim()) return;
-    setLoading(true); setResult(null); setAgentError(false);
+    setLoading(true); setResult(null); setAgentError(false); setChartView(false); setChartRec(null);
     try {
       const res = await devicesApi.executeQuery(selectedDb, sql);
       const data = res.data.data;
@@ -182,11 +208,42 @@ export default function Query() {
         <div>
           <div className="result-meta">
             <p className="result-label">{t('app.results')}</p>
-            {result.success && (
-              <span className="badge badge-info">
-                {result.rowCount} {t('app.rows')} · {result.executionTimeMs}{t('app.ms')}
-              </span>
-            )}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              {result.success && (
+                <span className="badge badge-info">
+                  {result.rowCount} {t('app.rows')} · {result.executionTimeMs}{t('app.ms')}
+                </span>
+              )}
+              {result.success && result.data && result.data.length > 0 && (
+                <div style={{ display: 'flex', gap: '4px' }}>
+                  <button
+                    className={`btn btn-sm ${!chartView ? 'btn-primary' : 'btn-secondary'}`}
+                    onClick={() => setChartView(false)}
+                    style={{ padding: '4px 10px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}
+                  >
+                    <Table size={12} /> Tablo
+                  </button>
+                  {chartRec ? (
+                    <button
+                      className={`btn btn-sm ${chartView ? 'btn-primary' : 'btn-secondary'}`}
+                      onClick={() => setChartView(true)}
+                      style={{ padding: '4px 10px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}
+                    >
+                      <BarChart2 size={12} /> Grafik
+                    </button>
+                  ) : (
+                    <button
+                      className={`btn btn-sm btn-secondary ${chartLoading ? 'btn-loading' : ''}`}
+                      disabled={chartLoading}
+                      onClick={visualize}
+                      style={{ padding: '4px 10px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}
+                    >
+                      {!chartLoading && <><BarChart2 size={12} /> Görselleştir</>}
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
 
           {!result.success ? (
@@ -195,18 +252,24 @@ export default function Query() {
               {result.error ?? t('errors.server_error')}
             </div>
           ) : result.data && result.data.length > 0 ? (
-            <div className="data-table-wrapper">
-              <table className="data-table">
-                <thead>
-                  <tr>{columns.map(col => <th key={col}>{col}</th>)}</tr>
-                </thead>
-                <tbody>
-                  {result.data.map((row, i) => (
-                    <tr key={i}>{columns.map(col => <td key={col}>{String(row[col] ?? '')}</td>)}</tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            chartView && chartRec ? (
+              <div className="card" style={{ padding: '20px' }}>
+                <QueryChart recommendation={chartRec} data={result.data} />
+              </div>
+            ) : (
+              <div className="data-table-wrapper">
+                <table className="data-table">
+                  <thead>
+                    <tr>{columns.map(col => <th key={col}>{col}</th>)}</tr>
+                  </thead>
+                  <tbody>
+                    {result.data.map((row, i) => (
+                      <tr key={i}>{columns.map(col => <td key={col}>{String(row[col] ?? '')}</td>)}</tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )
           ) : (
             <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>{t('app.no_results')}</p>
           )}

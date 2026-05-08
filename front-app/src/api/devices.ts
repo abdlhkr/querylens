@@ -1,12 +1,14 @@
 import api from './client';
 import type {
   ApiResponse,
-  DeviceRegistration,
+  ChartRecommendRequest,
+  ChartRecommendResponse,
   DatabaseConnection,
   CreateDatabaseRequest,
-  QueryResult,
+  DeviceRegistration,
   NaturalLanguageQueryResult,
   NaturalLanguageRequest,
+  QueryResult,
 } from '../types';
 
 export const devicesApi = {
@@ -49,4 +51,8 @@ export const devicesApi = {
 
   testConnection: (databaseId: string) =>
     api.post<ApiResponse<QueryResult>>(`/api/devices/queries/test/${databaseId}`),
+
+  // ─── Chart ────────────────────────────────────────────────────────────────
+  recommendChart: (data: ChartRecommendRequest) =>
+    api.post<ApiResponse<ChartRecommendResponse>>('/api/devices/charts/recommend', data),
 };

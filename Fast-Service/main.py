@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 from core.exceptions import InvalidInputError, LLMProviderError, QueryGenerationError
-from routers import query_router
+from routers import chart_router, query_router
 from schemas.response import ApiResponse
 
 app = FastAPI(
@@ -13,6 +13,7 @@ app = FastAPI(
 
 # ── Router Kayıtları ──────────────────────────────────────────────────────────
 app.include_router(query_router.router)
+app.include_router(chart_router.router)
 
 
 # ── Global Exception Handler'lar ──────────────────────────────────────────────
