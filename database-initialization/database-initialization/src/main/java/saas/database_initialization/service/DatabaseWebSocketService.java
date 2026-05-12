@@ -169,6 +169,7 @@ public class DatabaseWebSocketService {
                         conn.getPort(),
                         conn.getDatabaseName(),
                         conn.getUsername(),
+                        null,
                         conn.getDbType());
 
                 sendMessage(session, message);
