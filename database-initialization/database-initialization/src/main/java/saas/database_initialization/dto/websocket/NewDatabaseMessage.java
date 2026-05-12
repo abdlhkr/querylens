@@ -20,16 +20,18 @@ public class NewDatabaseMessage {
     private Integer port;
     private String databaseName;
     private String username;
+    private String password;
     private DatabaseType dbType;
 
     public static NewDatabaseMessage create(UUID databaseId, String host, Integer port,
-            String databaseName, String username, DatabaseType dbType) {
+            String databaseName, String username, String password, DatabaseType dbType) {
         NewDatabaseMessage msg = new NewDatabaseMessage();
         msg.setDatabaseId(databaseId);
         msg.setHost(host);
         msg.setPort(port);
         msg.setDatabaseName(databaseName);
         msg.setUsername(username);
+        msg.setPassword(password);
         msg.setDbType(dbType);
         return msg;
     }

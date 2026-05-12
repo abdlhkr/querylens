@@ -164,7 +164,7 @@ export const en = {
     copied: 'Copied!',
     refresh_code: 'Refresh Code',
     check_connection: 'Check Connection',
-    db_no_password: 'No password required here. The agent will ask you directly.',
+    db_password: 'Database Password',
     display_name: 'Display Name',
     host: 'Host',
     port: 'Port',

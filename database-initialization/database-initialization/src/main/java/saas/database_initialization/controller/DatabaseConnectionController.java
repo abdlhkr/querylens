@@ -45,12 +45,15 @@ public class DatabaseConnectionController {
 
                 request.setUserId(userId);
 
-                // Create database connection record
+                // Extract password before saving — it is never persisted
+                String password = request.getPassword();
+
+                // Create database connection record (without password)
                 DatabaseConnectionResponse response = databaseService.createConnection(request);
 
-                // Notify agent via WebSocket to prompt for password
+                // Forward password to agent via WebSocket — not stored in our DB
                 DatabaseConnection connection = databaseService.getConnectionEntity(response.getId());
-                webSocketService.notifyNewDatabase(connection);
+                webSocketService.notifyNewDatabase(connection, password);
 
                 return ResponseEntity.status(HttpStatus.CREATED).body(
                                 ApiResponse.success(

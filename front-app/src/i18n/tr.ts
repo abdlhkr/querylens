@@ -164,7 +164,7 @@ export const tr = {
     copied: 'Kopyalandı!',
     refresh_code: 'Kodu Yenile',
     check_connection: 'Bağlantıyı Kontrol Et',
-    db_no_password: 'Şifre bu formda istenmez. Agent sizden soracak.',
+    db_password: 'Veritabanı Şifresi',
     display_name: 'Görünen Ad',
     host: 'Sunucu',
     port: 'Port',
