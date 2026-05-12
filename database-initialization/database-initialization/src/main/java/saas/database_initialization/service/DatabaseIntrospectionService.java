@@ -158,7 +158,7 @@ public class DatabaseIntrospectionService {
             introspectionResult.setDatabaseId(databaseId);
             introspectionResult.setSchemaName(schemaName);
             
-            String resultText = result.getData() != null ? result.getData().toString() : "[]";
+            String resultText = result.getData() != null ? formatter.format(result.getData()) : "(no results)";
             introspectionResult.setResultText(resultText);
             introspectionResult.setExecutedAt(LocalDateTime.now());
 

@@ -15,7 +15,8 @@ class DatabaseManager {
     constructor() {
         this.databases = new Map(); // databaseId -> connection info (no password)
         this.connectionPool = new ConnectionPool();
-        this.credentialsFile = path.join(process.cwd(), '.database_credentials.enc');
+        const dataDir = process.env.DATA_DIR || process.cwd();
+        this.credentialsFile = path.join(dataDir, '.database_credentials.enc');
         this.encryptionKey = this.getOrCreateEncryptionKey();
 
         this.loadCredentials();
@@ -25,7 +26,8 @@ class DatabaseManager {
      * Get or create a machine-specific encryption key
      */
     getOrCreateEncryptionKey() {
-        const keyFile = path.join(process.cwd(), '.agent_key');
+        const dataDir = process.env.DATA_DIR || process.cwd();
+        const keyFile = path.join(dataDir, '.agent_key');
 
         if (fs.existsSync(keyFile)) {
             const content = fs.readFileSync(keyFile, 'utf-8').trim();
@@ -141,9 +143,18 @@ class DatabaseManager {
             }
         }
 
+        // Docker içinde çalışıyorsa localhost → host.docker.internal
+        const resolvedHost = (process.env.RUNNING_IN_DOCKER === 'true' && host === 'localhost')
+            ? 'host.docker.internal'
+            : host;
+
+        if (resolvedHost !== host) {
+            logger.info('🐳 Docker modunda localhost → host.docker.internal olarak çözüldü');
+        }
+
         logger.info('📂 Yeni database eklendi, bağlantı test ediliyor', {
             databaseId,
-            host,
+            host: resolvedHost,
             port,
             databaseName,
             dbType
@@ -158,14 +169,14 @@ class DatabaseManager {
 
         // Test connection
         const testResult = await this.connectionPool.testConnection(
-            { host, port, databaseName, username, dbType },
+            { host: resolvedHost, port, databaseName, username, dbType },
             password
         );
 
         if (testResult.success) {
             // Save credentials locally
             this.databases.set(databaseId, {
-                host,
+                host: resolvedHost,
                 port,
                 databaseName,
                 username,
