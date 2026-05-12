@@ -11,6 +11,7 @@ import saas.database_initialization.dto.database.DatabaseConnectionResponse;
 import saas.database_initialization.dto.database.UpdateDatabaseConnectionRequest;
 import saas.database_initialization.dto.response.ApiResponse;
 import saas.database_initialization.entity.DatabaseConnection;
+import saas.database_initialization.enums.ConnectionStatus;
 import saas.database_initialization.service.DatabaseConnectionService;
 import saas.database_initialization.service.DatabaseWebSocketService;
 
@@ -105,7 +106,19 @@ public class DatabaseConnectionController {
 
                 log.info("PUT /api/databases/{} - User: {}", id, userId);
 
+                String password = request.getPassword();
                 DatabaseConnectionResponse response = databaseService.updateConnection(userId, id, request);
+
+                boolean passwordProvided = password != null && !password.isBlank();
+                boolean statusIsPending = response.getStatus() == ConnectionStatus.PENDING;
+
+                if (passwordProvided || statusIsPending) {
+                        if (passwordProvided && !statusIsPending) {
+                                databaseService.resetToPending(id);
+                        }
+                        DatabaseConnection connection = databaseService.getConnectionEntity(id);
+                        webSocketService.notifyNewDatabase(connection, passwordProvided ? password : null);
+                }
 
                 return ResponseEntity.ok(
                                 ApiResponse.success(response, "Database connection updated"));

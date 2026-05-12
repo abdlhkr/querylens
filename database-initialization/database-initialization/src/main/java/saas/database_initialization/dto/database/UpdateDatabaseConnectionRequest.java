@@ -26,6 +26,8 @@ public class UpdateDatabaseConnectionRequest {
 
     private String username;
 
+    private String password;
+
     private DatabaseType dbType;
 
     private String displayName;
