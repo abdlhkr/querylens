@@ -34,7 +34,7 @@ export interface CreateUserRequest {
 
 // ─── Devices ───────────────────────────────────────────────────────────────
 export interface DeviceRegistration {
-  registryId: string;
+  deviceRegistryId: string;
 }
 
 export type DbType = 'POSTGRESQL' | 'MYSQL' | 'MSSQL' | 'ORACLE';

@@ -27,7 +27,7 @@ import java.util.UUID;
 public class CreateDeviceCodeService {
     private final CreateDeviceRegistryRepository registryRepository;
     private final DeviceRepository deviceRepository;
-    private final long tokenLifetime = 1000 * 60 * 10;
+    private final long tokenLifetime = 1000 * 60 * 60;
 
     public boolean isAny(String userId) {
         return registryRepository.findByUserID(userId).isPresent();

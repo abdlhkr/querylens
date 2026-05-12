@@ -49,7 +49,7 @@ export default function Onboarding() {
     setLoadingCode(true);
     try {
       const res = await devicesApi.registerDevice();
-      if (res.data.data?.registryId) setRegistryId(res.data.data.registryId);
+      if (res.data.data?.deviceRegistryId) setRegistryId(res.data.data.deviceRegistryId);
     } catch {
       toast.error(t('errors.server_error'));
     } finally {
@@ -57,8 +57,12 @@ export default function Onboarding() {
     }
   };
 
+  const dockerCommand = registryId
+    ? `docker run -d \\\n  --name querylens-agent \\\n  --restart unless-stopped \\\n  -v querylens-data:/app/data \\\n  -e GATEWAY_WS_URL=wss://querylensio.com \\\n  -e GATEWAY_HTTP_URL=https://querylensio.com \\\n  -e REGISTRY_ID=${registryId} \\\n  querylensio/main-app:latest`
+    : '';
+
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(registryId);
+    await navigator.clipboard.writeText(dockerCommand);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -228,8 +232,8 @@ export default function Onboarding() {
                   <div className="spinner" style={{ margin: '0 auto' }} />
                 ) : (
                   <>
-                    <span className="agent-code-text">{registryId || '—'}</span>
-                    <button className="btn btn-ghost btn-sm" onClick={handleCopy} disabled={!registryId}>
+                    <pre className="agent-code-text">{dockerCommand || '—'}</pre>
+                    <button className="btn btn-ghost btn-sm" onClick={handleCopy} disabled={!registryId} style={{ alignSelf: 'flex-start' }}>
                       {copied ? <Check size={14} /> : <Copy size={14} />}
                       {copied ? t('onboarding.copied') : t('onboarding.copy')}
                     </button>
