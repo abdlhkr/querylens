@@ -288,7 +288,7 @@ export default function Onboarding() {
               <div className="grid-2">
                 <div className="input-group">
                   <label className="input-label">{t('onboarding.host')} *</label>
-                  <input className="input" required placeholder="localhost" value={dbForm.host} onChange={e => setDbForm(p => ({ ...p, host: e.target.value }))} />
+                  <input className="input" required placeholder="host.docker.internal" value={dbForm.host} onChange={e => setDbForm(p => ({ ...p, host: e.target.value }))} />
                 </div>
                 <div className="input-group">
                   <label className="input-label">{t('onboarding.port')} *</label>
