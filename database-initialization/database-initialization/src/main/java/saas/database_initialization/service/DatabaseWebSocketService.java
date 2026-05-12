@@ -69,9 +69,19 @@ public class DatabaseWebSocketService {
             Device device = deviceRepository.findById(connection.getDeviceId())
                     .orElseThrow(() -> new ResourceNotFoundException("Device not found"));
 
-            WebSocketSession session = activeSessions.get(device.getConnectionId());
+            String connectionId = device.getConnectionId();
+            if (connectionId == null) {
+                log.warn("Device has no active session: {}", connection.getId());
+                databaseConnectionService.markAsFailed(connection.getId(),
+                        "Agent bağlı değil. Lütfen agent'ın çalıştığını ve bağlı olduğunu kontrol edin.");
+                return;
+            }
+
+            WebSocketSession session = activeSessions.get(connectionId);
             if (session == null || !session.isOpen()) {
                 log.warn("Device not connected, cannot notify about new database: {}", connection.getId());
+                databaseConnectionService.markAsFailed(connection.getId(),
+                        "Agent bağlı değil. Lütfen agent'ın çalıştığını ve bağlı olduğunu kontrol edin.");
                 return;
             }
 

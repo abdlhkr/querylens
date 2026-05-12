@@ -163,6 +163,10 @@ class WebSocketClient extends EventEmitter {
 
                 case 'ERROR':
                     logger.error('Sunucu hatası', { error: message.error });
+                    if (message.error?.code === 'RESOURCE_NOT_FOUND') {
+                        this.deviceId = null;
+                        this.needsReRegistration = true;
+                    }
                     this.emit('serverError', message);
                     break;
 
@@ -190,6 +194,11 @@ class WebSocketClient extends EventEmitter {
 
         // Otomatik yeniden bağlanma
         if (code !== 1000) { // Normal kapatma değilse
+            if (this.needsReRegistration) {
+                this.needsReRegistration = false;
+                this.emit('deviceNotFound');
+                return;
+            }
             this.scheduleReconnect();
         }
     }

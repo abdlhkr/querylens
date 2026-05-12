@@ -112,6 +112,12 @@ class WebSocketAgent {
             logger.error('⚠️ Hata', { error: error.message });
         });
 
+        this.wsClient.on('deviceNotFound', () => {
+            logger.error('❌ Cihaz bulunamadı. Docker yeniden başlatıldığında kayıt sıfırlanır.');
+            logger.error('   Çözüm: Frontend\'den yeni kayıt kodu alın, .env dosyasında REGISTRY_ID=<yeni_kod> yapın, .device_id dosyasını silin ve agent\'ı yeniden başlatın.');
+            this.deviceManager.clearDeviceId();
+        });
+
         this.wsClient.on('maxReconnectReached', () => {
             logger.error('❌ Maksimum yeniden bağlanma denemesi aşıldı');
             this.stop();
