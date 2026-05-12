@@ -178,7 +178,7 @@ export default function Databases() {
               <div className="grid-2">
                 <div className="input-group">
                   <label className="input-label">{t('onboarding.host')} *</label>
-                  <input className="input" required value={form.host} onChange={e => setForm(p => ({ ...p, host: e.target.value }))} placeholder="localhost" />
+                  <input className="input" required value={form.host} onChange={e => setForm(p => ({ ...p, host: e.target.value }))} placeholder="host.docker.internal" />
                 </div>
                 <div className="input-group">
                   <label className="input-label">{t('onboarding.port')} *</label>
