@@ -58,7 +58,7 @@ export default function Onboarding() {
   };
 
   const dockerCommand = registryId
-    ? `docker run -d \\\n  --name querylens-agent \\\n  --restart unless-stopped \\\n  -v querylens-data:/app/data \\\n  -e GATEWAY_WS_URL=wss://querylensio.com \\\n  -e GATEWAY_HTTP_URL=https://querylensio.com \\\n  -e REGISTRY_ID=${registryId} \\\n  querylensio/main-app:latest`
+    ? `docker run -d -i \\\n  --name querylens-agent \\\n  --restart unless-stopped \\\n  -v querylens-data:/app/data \\\n  -e GATEWAY_WS_URL=wss://querylensio.com \\\n  -e GATEWAY_HTTP_URL=https://querylensio.com \\\n  -e REGISTRY_ID=${registryId} \\\n  querylensio/main-app:latest`
     : '';
 
   const handleCopy = async () => {
