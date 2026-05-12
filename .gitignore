@@ -10,7 +10,6 @@ target/
 build/
 out/
 .gradle/
-.mvn/
 *.class
 *.jar
 *.war
