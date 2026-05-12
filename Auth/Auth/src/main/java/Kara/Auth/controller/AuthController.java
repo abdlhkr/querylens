@@ -97,7 +97,7 @@ public class AuthController {
         refreshTokenService.deleteRefreshToken(refreshToken);
         ResponseCookie clearAccess = ResponseCookie.from("access_token", "")
                 .httpOnly(true)
-                .secure(false)
+                .secure(true)
                 .path("/")
                 .maxAge(0)
                 .sameSite("Strict")
@@ -105,7 +105,7 @@ public class AuthController {
 
         ResponseCookie clearRefresh = ResponseCookie.from("refresh_token", "")
                 .httpOnly(true)
-                .secure(false)
+                .secure(true)
                 .path("/auth/refresh")
                 .maxAge(0)
                 .sameSite("Strict")
@@ -120,7 +120,7 @@ public class AuthController {
     private void addTokenCookies(HttpServletResponse response, AuthService.TokenPair tokens) {
         ResponseCookie accessCookie = ResponseCookie.from("access_token", tokens.accessToken())
                 .httpOnly(true)
-                .secure(false)
+                .secure(true)
                 .path("/")
                 .maxAge(Duration.ofMillis(accessTokenExpiration))
                 .sameSite("Strict")
@@ -128,7 +128,7 @@ public class AuthController {
 
         ResponseCookie refreshCookie = ResponseCookie.from("refresh_token", tokens.refreshToken())
                 .httpOnly(true)
-                .secure(false)
+                .secure(true)
                 .path("/auth/refresh")
                 .maxAge(Duration.ofMillis(refreshTokenExpiration))
                 .sameSite("Strict")

@@ -1,0 +1,9 @@
+node_modules
+logs
+.env
+.device_id
+.agent_key
+.database_credentials.enc
+*.log
+.git
+README.md

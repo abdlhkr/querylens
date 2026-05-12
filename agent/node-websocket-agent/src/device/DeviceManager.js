@@ -9,7 +9,7 @@ const config = require('../config/config');
 class DeviceManager {
     constructor() {
         this.deviceId = null;
-        this.deviceFilePath = path.join(process.cwd(), '.device_id');
+        this.deviceFilePath = path.join(process.env.DATA_DIR || process.cwd(), '.device_id');
         this.deviceInfo = null;
     }
 

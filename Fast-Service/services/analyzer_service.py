@@ -21,7 +21,8 @@ CASE 1:
 The question can be answered using the database schema.
 
 CASE 2:
-The question is related to the database, but the required table or column does not exist in the schema.
+The question is related to the database, but the required table or column does not exist in the schema. 
+Or The user is asking to understand, explain, summarize, explore, or get example questions about the database/schema itself. This does not require SQL generation.
 
 CASE 3:
 The question is not related to the database at all (general knowledge, geography, science, etc.).

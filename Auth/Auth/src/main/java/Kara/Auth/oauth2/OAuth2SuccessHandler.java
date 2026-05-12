@@ -46,9 +46,8 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     @Value("${jwt.refresh.expiration}")
     private long refreshTokenExpiration;
 
-    // Başarılı girişten sonra yönlendirilecek frontend adresi
-    // Production'da bu da properties'e taşınmalı
-    private static final String FRONTEND_REDIRECT_URL = "http://localhost:5173/app";
+    @Value("${frontend.redirect-url:https://querylensio.com/app}")
+    private String frontendRedirectUrl;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request,
@@ -85,7 +84,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         //   (Strict olsaydı Google'dan gelen redirect'te cookie set edilemezdi)
         ResponseCookie accessCookie = ResponseCookie.from("access_token", accessToken)
                 .httpOnly(true)
-                .secure(false)           // Production'da true yapılacak (HTTPS)
+                .secure(true)           // Production'da true yapılacak (HTTPS)
                 .path("/")
                 .maxAge(Duration.ofMillis(accessTokenExpiration))
                 .sameSite("Lax")         // OAuth redirect için Lax, plain login için Strict
@@ -93,7 +92,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
         ResponseCookie refreshCookie = ResponseCookie.from("refresh_token", refreshToken)
                 .httpOnly(true)
-                .secure(false)
+                .secure(true)
                 .path("/auth/refresh")   // Sadece refresh endpoint'inden gönderilir
                 .maxAge(Duration.ofMillis(refreshTokenExpiration))
                 .sameSite("Lax")
@@ -103,7 +102,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
 
         // Frontend'e yönlendir
-        getRedirectStrategy().sendRedirect(request, response, FRONTEND_REDIRECT_URL);
+        getRedirectStrategy().sendRedirect(request, response, frontendRedirectUrl);
     }
 
     /**
