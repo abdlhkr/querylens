@@ -36,7 +36,7 @@ export default function Onboarding() {
 
   // Step 3 state
   const [dbForm, setDbForm] = useState<CreateDatabaseRequest>({
-    host: '', port: 5432, databaseName: '', username: '', dbType: 'POSTGRESQL', displayName: '',
+    host: '', port: 5432, databaseName: '', username: '', password: '', dbType: 'POSTGRESQL', displayName: '',
   });
   const [savingDb, setSavingDb] = useState(false);
 
@@ -303,14 +303,15 @@ export default function Onboarding() {
               </div>
 
               <div className="input-group">
+                <label className="input-label">{t('onboarding.db_password')} *</label>
+                <input className="input" type="password" required value={dbForm.password} onChange={e => setDbForm(p => ({ ...p, password: e.target.value }))} autoComplete="new-password" />
+              </div>
+
+              <div className="input-group">
                 <label className="input-label">{t('onboarding.db_type')} *</label>
                 <select className="input select" value={dbForm.dbType} onChange={e => setDbForm(p => ({ ...p, dbType: e.target.value as DbType }))}>
                   {DB_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                 </select>
-              </div>
-
-              <div className="alert alert-warning" style={{ fontSize: '12px' }}>
-                ⚠️ {t('onboarding.db_no_password')}
               </div>
 
               <div className="flex gap-3">

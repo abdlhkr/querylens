@@ -45,6 +45,7 @@ export interface CreateDatabaseRequest {
   port: number;
   databaseName: string;
   username: string;
+  password: string;
   dbType: DbType;
   displayName?: string;
 }

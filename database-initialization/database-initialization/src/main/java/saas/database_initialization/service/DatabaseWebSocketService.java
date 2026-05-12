@@ -61,9 +61,10 @@ public class DatabaseWebSocketService {
     }
 
     /**
-     * Send NEW_DATABASE message to agent when a new database connection is created
+     * Send NEW_DATABASE message to agent when a new database connection is created.
+     * Password is passed in-memory and forwarded to the agent — never persisted here.
      */
-    public void notifyNewDatabase(DatabaseConnection connection) {
+    public void notifyNewDatabase(DatabaseConnection connection, String password) {
         try {
             Device device = deviceRepository.findById(connection.getDeviceId())
                     .orElseThrow(() -> new ResourceNotFoundException("Device not found"));
@@ -80,6 +81,7 @@ public class DatabaseWebSocketService {
                     connection.getPort(),
                     connection.getDatabaseName(),
                     connection.getUsername(),
+                    password,
                     connection.getDbType());
 
             sendMessage(session, message);

@@ -1,7 +1,6 @@
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
-const readline = require('readline');
 const ConnectionPool = require('./ConnectionPool');
 const logger = require('../utils/logger');
 
@@ -142,7 +141,7 @@ class DatabaseManager {
             }
         }
 
-        logger.info('📂 Yeni database eklendi, doğrulama bekleniyor', {
+        logger.info('📂 Yeni database eklendi, bağlantı test ediliyor', {
             databaseId,
             host,
             port,
@@ -150,12 +149,11 @@ class DatabaseManager {
             dbType
         });
 
-        // Prompt user for password
-        const password = await this.promptForPassword(host, port, databaseName);
+        const password = message.password;
 
         if (!password) {
-            logger.warn('Password girişi iptal edildi');
-            return { success: false, error: 'Password entry cancelled' };
+            logger.error('❌ Mesajda şifre yok');
+            return { success: false, error: 'No password provided' };
         }
 
         // Test connection
@@ -183,37 +181,6 @@ class DatabaseManager {
             logger.error('❌ Database bağlantısı başarısız', { error: testResult.error });
             return { success: false, error: testResult.error };
         }
-    }
-
-    /**
-     * Prompt user for database password via console
-     */
-    promptForPassword(host, port, databaseName) {
-        return new Promise((resolve) => {
-            const rl = readline.createInterface({
-                input: process.stdin,
-                output: process.stdout
-            });
-
-            console.log('\n' + '='.repeat(50));
-            console.log(`🔐 Database şifresi gerekli:`);
-            console.log(`   Host: ${host}:${port}`);
-            console.log(`   Database: ${databaseName}`);
-            console.log('='.repeat(50));
-
-            // Hide password input
-            const stdin = process.stdin;
-            const originalWrite = process.stdout.write.bind(process.stdout);
-
-            rl.question('Şifre: ', (password) => {
-                rl.close();
-                console.log(); // New line after password
-                resolve(password);
-            });
-
-            // Note: For true password hiding, you'd need a package like 'readline-sync'
-            // This is a simplified version
-        });
     }
 
     /**

@@ -10,7 +10,7 @@ import './Databases.css';
 const DB_TYPES: DbType[] = ['POSTGRESQL', 'MYSQL', 'MSSQL', 'ORACLE'];
 
 const emptyForm: CreateDatabaseRequest = {
-  host: '', port: 5432, databaseName: '', username: '', dbType: 'POSTGRESQL', displayName: '',
+  host: '', port: 5432, databaseName: '', username: '', password: '', dbType: 'POSTGRESQL', displayName: '',
 };
 
 export default function Databases() {
@@ -40,7 +40,7 @@ export default function Databases() {
   const openAdd = () => { setEditTarget(null); setForm(emptyForm); setShowModal(true); };
   const openEdit = (db: DatabaseConnection) => {
     setEditTarget(db);
-    setForm({ host: db.host, port: db.port, databaseName: db.databaseName, username: db.username, dbType: db.dbType, displayName: db.displayName ?? '' });
+    setForm({ host: db.host, port: db.port, databaseName: db.databaseName, username: db.username, password: '', dbType: db.dbType, displayName: db.displayName ?? '' });
     setShowModal(true);
   };
 
@@ -194,14 +194,14 @@ export default function Databases() {
                 <input className="input" required value={form.username} onChange={e => setForm(p => ({ ...p, username: e.target.value }))} />
               </div>
               <div className="input-group">
+                <label className="input-label">{t('onboarding.db_password')} *</label>
+                <input className="input" type="password" required={!editTarget} value={form.password} onChange={e => setForm(p => ({ ...p, password: e.target.value }))} autoComplete="new-password" />
+              </div>
+              <div className="input-group">
                 <label className="input-label">{t('onboarding.db_type')} *</label>
                 <select className="input select" value={form.dbType} onChange={e => setForm(p => ({ ...p, dbType: e.target.value as DbType }))}>
                   {DB_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                 </select>
-              </div>
-
-              <div className="alert alert-warning" style={{ fontSize: '12px' }}>
-                ⚠️ {t('onboarding.db_no_password')}
               </div>
 
               <div className="flex gap-3" style={{ marginTop: '4px' }}>

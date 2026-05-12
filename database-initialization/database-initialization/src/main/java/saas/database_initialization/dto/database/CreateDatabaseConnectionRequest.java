@@ -32,6 +32,9 @@ public class CreateDatabaseConnectionRequest {
     @NotBlank(message = "Username is required")
     private String username;
 
+    @NotBlank(message = "Password is required")
+    private String password;
+
     @NotNull(message = "Database type is required")
     private DatabaseType dbType;
 
