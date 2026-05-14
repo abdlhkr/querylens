@@ -1,0 +1,33 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches:
+      - production-changes
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    steps:
+      - name: Pull latest code
+        working-directory: /root/projects/querylens/main/SAAS
+        run: git pull origin production-changes
+
+      - name: Build and restart containers
+        working-directory: /root/projects/querylens/main/SAAS
+        run: docker compose up --build -d
+
+      - name: Health check
+        run: |
+          sleep 15
+          docker ps --filter "status=running" --format "{{.Names}}" | sort
+          echo "---"
+          TOTAL=$(docker compose -f /root/projects/querylens/main/SAAS/docker-compose.yml ps -q | wc -l)
+          RUNNING=$(docker compose -f /root/projects/querylens/main/SAAS/docker-compose.yml ps -q --status running | wc -l)
+          echo "Running: $RUNNING / $TOTAL containers"
+          if [ "$RUNNING" -lt "$TOTAL" ]; then
+            echo "Some containers are not running!"
+            docker compose -f /root/projects/querylens/main/SAAS/docker-compose.yml ps
+            exit 1
+          fi
