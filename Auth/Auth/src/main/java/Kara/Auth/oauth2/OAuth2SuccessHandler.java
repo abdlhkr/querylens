@@ -46,8 +46,11 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     @Value("${jwt.refresh.expiration}")
     private long refreshTokenExpiration;
 
-    @Value("${frontend.redirect-url:https://querylensio.com/app}")
+    @Value("${frontend.redirect-url:http://localhost:3000/app}")
     private String frontendRedirectUrl;
+
+    @Value("${cookie.secure:false}")
+    private boolean cookieSecure;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request,
@@ -84,7 +87,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         //   (Strict olsaydı Google'dan gelen redirect'te cookie set edilemezdi)
         ResponseCookie accessCookie = ResponseCookie.from("access_token", accessToken)
                 .httpOnly(true)
-                .secure(true)           // Production'da true yapılacak (HTTPS)
+                .secure(cookieSecure)           // Production'da true yapılacak (HTTPS)
                 .path("/")
                 .maxAge(Duration.ofMillis(accessTokenExpiration))
                 .sameSite("Lax")         // OAuth redirect için Lax, plain login için Strict
@@ -92,7 +95,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
         ResponseCookie refreshCookie = ResponseCookie.from("refresh_token", refreshToken)
                 .httpOnly(true)
-                .secure(true)
+                .secure(cookieSecure)
                 .path("/auth/refresh")   // Sadece refresh endpoint'inden gönderilir
                 .maxAge(Duration.ofMillis(refreshTokenExpiration))
                 .sameSite("Lax")

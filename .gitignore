@@ -1,3 +1,6 @@
+# --- LOCAL OVERRIDE ---
+docker-compose.override.yml
+
 # --- GENEL DOSYALAR ---
 .DS_Store
 Thumbs.db
