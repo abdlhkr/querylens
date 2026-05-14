@@ -74,7 +74,7 @@ export const en = {
       'The entire application runs on your own server. There is no backend relay, no data pipeline, no cloud component on our side.',
     sec2_title: 'Zero data retention',
     sec2_desc:
-      'We store nothing. No query logs, no results, no database schema. Your data is processed in memory on your server and never transmitted to us.',
+      'We store nothing. No query logs, no results. Your data is processed in memory on your server and never transmitted to us.',
     sec3_title: 'KVKK & GDPR compliant by default',
     sec3_desc:
       'Because your data stays within your own infrastructure, compliance with Turkish KVKK and European GDPR is satisfied structurally — not just contractually.',
@@ -83,7 +83,7 @@ export const en = {
       'Permissions are inherited directly from your database user accounts. What a user can access in the database is exactly what they can query through QueryLens — no exceptions.',
     stat_label: 'bytes of your data ever stored on our infrastructure',
     stat_note:
-      'QueryLens is a query interface, not a data platform. Your database stays on your server. Our software runs on your server. We are never in the data path.',
+      'QueryLens is a query interface, not a data platform. Your database stays on your server. Our software runs on your server. Your data is never accessed under any circumstances.',
 
     // DB Permissions
     db_eyebrow: 'Access Model',
@@ -112,6 +112,8 @@ export const en = {
     cta_title: 'Ready to give your\nteam instant data access?',
     cta_lead: 'Deploy in minutes. No SQL. No complexity. No data leaving your server.',
     cta_btn: 'Request a demo',
+
+    nav_demo: 'Request Demo',
 
     // Footer
     footer_docs: 'Documentation',

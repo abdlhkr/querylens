@@ -74,7 +74,7 @@ export const tr = {
       'Tüm uygulama kendi sunucunuzda çalışır. Bizim tarafımızda arka plan aktarımı, veri hattı veya bulut bileşeni yoktur.',
     sec2_title: 'Sıfır veri saklama',
     sec2_desc:
-      'Hiçbir şey saklamayız. Sorgu günlükleri yok, sonuçlar yok, veritabanı şeması yok. Verileriniz sunucunuzda bellekte işlenir ve bize asla iletilmez.',
+      'Hiçbir şey saklamayız. Sorgu günlükleri yok, sonuçlar yok. Verileriniz sunucunuzda bellekte işlenir ve bize asla iletilmez.',
     sec3_title: 'Varsayılan olarak KVKK & GDPR uyumlu',
     sec3_desc:
       'Verileriniz kendi altyapınızda kaldığı için, Türk KVKK ve Avrupa GDPR uyumluluğu yapısal olarak karşılanır — sadece sözleşmesel değil.',
@@ -83,7 +83,7 @@ export const tr = {
       'İzinler doğrudan veritabanı kullanıcı hesaplarınızdan miras alınır. Bir kullanıcının veritabanında erişebildiği, QueryLens üzerinden sorgulayabildiğiyle tamamen aynıdır.',
     stat_label: 'bayt veriniz altyapımızda saklanmaz',
     stat_note:
-      'QueryLens bir sorgu arayüzüdür, veri platformu değildir. Veritabanınız sizin sunucunuzda kalır. Yazılımımız sizin sunucunuzda çalışır. Biz hiçbir zaman veri yolundayız.',
+      'QueryLens bir sorgu arayüzüdür, veri platformu değildir. Veritabanınız sizin sunucunuzda kalır. Yazılımımız sizin sunucunuzda çalışır. Verilerinize hiçbir koşulda erişilmez.',
 
     // DB Permissions
     db_eyebrow: 'Erişim Modeli',
@@ -112,6 +112,8 @@ export const tr = {
     cta_title: 'Ekibinize anlık veri\nerişimi sunmaya hazır mısınız?',
     cta_lead: 'Dakikalar içinde kurun. SQL yok. Karmaşıklık yok. Sunucunuzdan çıkan veri yok.',
     cta_btn: 'Demo talep edin',
+
+    nav_demo: 'Demo Talep Et',
 
     // Footer
     footer_docs: 'Dokümantasyon',
