@@ -224,6 +224,7 @@ export const tr = {
     send_code: 'Kodu Gönder',
     password_mismatch: 'Şifreler eşleşmiyor.',
     current_email: 'Mevcut E-posta',
+    delete_account_verify_hint: 'Hesabınızı kalıcı olarak silmek için e-postanıza gönderilen kodu girin.',
   },
   pricing: {
     starter: 'Starter',

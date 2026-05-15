@@ -224,6 +224,7 @@ export const en = {
     send_code: 'Send Code',
     password_mismatch: 'Passwords do not match.',
     current_email: 'Current Email',
+    delete_account_verify_hint: 'Enter the code sent to your email to permanently delete your account.',
   },
   pricing: {
     starter: 'Starter',

@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import saas.database_initialization.dto.websocket.*;
@@ -276,5 +277,26 @@ public class DatabaseWebSocketService {
                     return session != null && session.isOpen();
                 })
                 .orElse(false);
+    }
+
+    /**
+     * Force-close the WebSocket session belonging to a user's device.
+     * Called during account deletion so the agent is immediately disconnected.
+     */
+    public void forceDisconnectUser(UUID userId) {
+        deviceRepository.findByUserID(userId).ifPresent(device -> {
+            String connectionId = device.getConnectionId();
+            if (connectionId == null) return;
+
+            WebSocketSession session = activeSessions.get(connectionId);
+            if (session != null && session.isOpen()) {
+                try {
+                    session.close(CloseStatus.NORMAL);
+                    log.info("Force-closed WebSocket session for userId: {}", userId);
+                } catch (Exception e) {
+                    log.error("Failed to close WebSocket session for userId: {}", userId, e);
+                }
+            }
+        });
     }
 }

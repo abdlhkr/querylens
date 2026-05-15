@@ -24,6 +24,8 @@ export default function Settings() {
   });
   const [saving, setSaving] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteStep, setDeleteStep] = useState<'send' | 'verify'>('send');
+  const [deleteCode, setDeleteCode] = useState('');
   const [deleting, setDeleting] = useState(false);
 
   // Account status
@@ -61,10 +63,30 @@ export default function Settings() {
     }
   };
 
-  const handleDelete = async () => {
+  const openDeleteModal = () => {
+    setDeleteStep('send');
+    setDeleteCode('');
+    setShowDeleteModal(true);
+  };
+
+  const handleSendDeleteCode = async () => {
     setDeleting(true);
     try {
-      await usersApi.deleteUser();
+      await authApi.sendDeleteAccountCode();
+      toast.success(t('app.code_sent'));
+      setDeleteStep('verify');
+    } catch {
+      toast.error(t('errors.server_error'));
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleDelete = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setDeleting(true);
+    try {
+      await authApi.deleteAccount(Number(deleteCode));
       clearProfile();
       navigate('/auth/login');
     } catch {
@@ -291,13 +313,13 @@ export default function Settings() {
           <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '16px' }}>
             {t('app.delete_confirm')}
           </p>
-          <button className="btn btn-danger" onClick={() => setShowDeleteModal(true)}>
+          <button className="btn btn-danger" onClick={openDeleteModal}>
             <Trash2 size={15} /> {t('app.delete_account')}
           </button>
         </div>
       </div>
 
-      {/* Delete Confirm Modal */}
+      {/* Delete Account Modal */}
       {showDeleteModal && (
         <div className="modal-backdrop" onClick={() => setShowDeleteModal(false)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
@@ -309,24 +331,62 @@ export default function Settings() {
                 <X size={18} />
               </button>
             </div>
-            <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '24px' }}>
-              {t('app.delete_confirm')}
-            </p>
-            <div className="flex gap-3">
-              <button
-                className="btn btn-ghost w-full"
-                onClick={() => setShowDeleteModal(false)}
-              >
-                {t('app.cancel')}
-              </button>
-              <button
-                className={`btn btn-danger w-full ${deleting ? 'btn-loading' : ''}`}
-                onClick={handleDelete}
-                disabled={deleting}
-              >
-                {!deleting && t('app.confirm')}
-              </button>
-            </div>
+
+            {deleteStep === 'send' ? (
+              <div>
+                <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '24px' }}>
+                  {t('app.delete_confirm')}
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    className="btn btn-ghost w-full"
+                    onClick={() => setShowDeleteModal(false)}
+                  >
+                    {t('app.cancel')}
+                  </button>
+                  <button
+                    className={`btn btn-danger w-full ${deleting ? 'btn-loading' : ''}`}
+                    onClick={handleSendDeleteCode}
+                    disabled={deleting}
+                  >
+                    {!deleting && t('app.send_code')}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <form onSubmit={handleDelete} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <p style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
+                  {t('app.delete_account_verify_hint')}
+                </p>
+                <div className="input-group">
+                  <label className="input-label">{t('app.verification_code')} *</label>
+                  <input
+                    className="input"
+                    required
+                    maxLength={6}
+                    placeholder="123456"
+                    value={deleteCode}
+                    onChange={e => setDeleteCode(e.target.value.replace(/\D/g, ''))}
+                  />
+                </div>
+                <div className="flex gap-3" style={{ marginTop: '8px' }}>
+                  <button
+                    type="button"
+                    className="btn btn-ghost w-full"
+                    onClick={() => setDeleteStep('send')}
+                  >
+                    {t('app.cancel')}
+                  </button>
+                  <button
+                    type="submit"
+                    className={`btn btn-danger w-full ${deleting ? 'btn-loading' : ''}`}
+                    disabled={deleting || deleteCode.length !== 6}
+                  >
+                    {!deleting && t('app.confirm')}
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
         </div>
       )}

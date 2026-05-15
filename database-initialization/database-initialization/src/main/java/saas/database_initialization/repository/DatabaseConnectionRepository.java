@@ -1,6 +1,7 @@
 package saas.database_initialization.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Repository;
 import saas.database_initialization.entity.DatabaseConnection;
 import saas.database_initialization.enums.ConnectionStatus;
@@ -37,4 +38,7 @@ public interface DatabaseConnectionRepository extends JpaRepository<DatabaseConn
      * database
      */
     boolean existsByUserIdAndHostAndPortAndDatabaseName(UUID userId, String host, Integer port, String databaseName);
+
+    @Modifying
+    void deleteByUserId(UUID userId);
 }

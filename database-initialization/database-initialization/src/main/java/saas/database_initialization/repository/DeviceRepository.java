@@ -1,6 +1,7 @@
 package saas.database_initialization.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import saas.database_initialization.entity.Device;
 import saas.database_initialization.enums.DeviceStatus;
 
@@ -13,8 +14,8 @@ public interface DeviceRepository extends JpaRepository<Device, UUID> {
 
     List<Device> findByStatus(DeviceStatus status);
 
-    /**
-     * Find device by user ID - each user has one device
-     */
     Optional<Device> findByUserID(UUID userId);
+
+    @Modifying
+    void deleteByUserID(UUID userId);
 }

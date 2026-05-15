@@ -3,6 +3,7 @@ package saas.database_initialization.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import saas.database_initialization.dto.database.CreateDatabaseConnectionRequest;
 import saas.database_initialization.dto.database.DatabaseConnectionResponse;
 import saas.database_initialization.dto.database.UpdateDatabaseConnectionRequest;
@@ -11,8 +12,10 @@ import saas.database_initialization.entity.Device;
 import saas.database_initialization.enums.ConnectionStatus;
 import saas.database_initialization.exception.ConflictException;
 import saas.database_initialization.exception.ResourceNotFoundException;
+import saas.database_initialization.repository.CreateDeviceRegistryRepository;
 import saas.database_initialization.repository.DatabaseConnectionRepository;
 import saas.database_initialization.repository.DeviceRepository;
+import saas.database_initialization.repository.IntrospectionResultRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -29,6 +32,8 @@ public class DatabaseConnectionService {
 
     private final DatabaseConnectionRepository repository;
     private final DeviceRepository deviceRepository;
+    private final IntrospectionResultRepository introspectionResultRepository;
+    private final CreateDeviceRegistryRepository createDeviceRegistryRepository;
 
     /**
      * Create a new database connection (without password)
@@ -221,5 +226,21 @@ public class DatabaseConnectionService {
 
         connection.setLastUsedAt(LocalDateTime.now());
         repository.save(connection);
+    }
+
+    @Transactional
+    public void deleteAllUserData(UUID userId) {
+        log.info("Deleting all data for user: {}", userId);
+
+        List<DatabaseConnection> connections = repository.findByUserId(userId);
+        for (DatabaseConnection conn : connections) {
+            introspectionResultRepository.deleteByDatabaseId(conn.getId());
+        }
+
+        repository.deleteByUserId(userId);
+        deviceRepository.deleteByUserID(userId);
+        createDeviceRegistryRepository.deleteByUserID(userId.toString());
+
+        log.info("All data deleted for user: {}", userId);
     }
 }

@@ -13,6 +13,10 @@ import saas.database_initialization.dto.device.register.CreateDeviceRequest;
 import saas.database_initialization.dto.device.register.CreateDeviceResponse;
 import saas.database_initialization.dto.response.ApiResponse;
 import saas.database_initialization.service.CreateDeviceCodeService;
+import saas.database_initialization.service.DatabaseConnectionService;
+import saas.database_initialization.service.DatabaseWebSocketService;
+
+import java.util.UUID;
 
 /**
  * REST controller for device registration and authentication
@@ -25,6 +29,8 @@ import saas.database_initialization.service.CreateDeviceCodeService;
 public class DeviceController {
 
     private final CreateDeviceCodeService deviceService;
+    private final DatabaseConnectionService databaseConnectionService;
+    private final DatabaseWebSocketService databaseWebSocketService;
 
     /**
      * Register a new device for a user
@@ -90,5 +96,16 @@ public class DeviceController {
                 ApiResponse.success(
                         hasRegistration,
                         hasRegistration ? "User has active registration code" : "No active registration code found"));
+    }
+
+    @DeleteMapping("/user-data")
+    public ResponseEntity<Void> deleteUserData(
+            @RequestHeader("X-User-Id") String userId) {
+
+        log.info("DELETE /api/devices/user-data - User: {}", userId);
+        UUID userUUID = UUID.fromString(userId);
+        databaseWebSocketService.forceDisconnectUser(userUUID);
+        databaseConnectionService.deleteAllUserData(userUUID);
+        return ResponseEntity.noContent().build();
     }
 }

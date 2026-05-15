@@ -5,5 +5,6 @@ public enum ConfType {
     LOGIN,
     SET_PASSWORD,
     CHANGE_EMAIL,
-    FORGOT_PASSWORD
+    FORGOT_PASSWORD,
+    DELETE_ACCOUNT
 }

@@ -59,4 +59,10 @@ export const authApi = {
 
   changeEmail: (data: { code: string; newEmail: string }) =>
     api.post<AuthResponse>('/auth/account/change-email', data),
+
+  sendDeleteAccountCode: () =>
+    api.post<AuthResponse>('/auth/account/send-delete-account-code'),
+
+  deleteAccount: (code: number) =>
+    api.delete<AuthResponse>('/auth/account', { data: { code } }),
 };

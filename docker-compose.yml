@@ -80,6 +80,8 @@ services:
       ALLOWED_ORIGINS: https://querylensio.com
       FRONTEND_REDIRECT_URL: https://querylensio.com/app
       OAUTH2_REDIRECT_URI: https://querylensio.com/login/oauth2/code/google
+      USER_SERVICE_URL: http://user-service:8082
+      DB_SERVICE_URL: http://db-service:8083
     ports:
       - "8081:8081"
     depends_on:

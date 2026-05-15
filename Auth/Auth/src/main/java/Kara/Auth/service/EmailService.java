@@ -51,6 +51,10 @@ public class EmailService {
                     subject = "Şifre Sıfırlama";
                     messageText = "Şifrenizi sıfırlamak için aşağıdaki kodu kullanın.";
                 }
+                case DELETE_ACCOUNT -> {
+                    subject = "Hesap Silme Doğrulaması";
+                    messageText = "Hesabınızı kalıcı olarak silmek için aşağıdaki kodu kullanın.";
+                }
                 default -> {
                     subject = "Doğrulama Kodu";
                     messageText = "Doğrulama kodunuz aşağıda yer almaktadır.";

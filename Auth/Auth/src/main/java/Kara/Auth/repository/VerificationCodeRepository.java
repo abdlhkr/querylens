@@ -13,4 +13,6 @@ public interface VerificationCodeRepository extends JpaRepository<VerificationCo
             String email, String code, ConfType type);
 
     void deleteByEmailAndType(String email, ConfType type);
+
+    void deleteByEmail(String email);
 }
