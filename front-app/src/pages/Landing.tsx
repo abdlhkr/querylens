@@ -308,13 +308,13 @@ export default function Landing() {
           {t('landing.cta_lead')}
         </p>
         <div ref={reveal} className="ql-reveal">
-          <Link
-            to="/auth/register"
+          <a
+            href="mailto:info@querylensio.com?subject=Demo%20Talebi"
             className="lbtn-primary"
             style={{ fontSize: 15, padding: '16px 40px' }}
           >
             {t('landing.cta_btn')}
-          </Link>
+          </a>
         </div>
       </section>
 
