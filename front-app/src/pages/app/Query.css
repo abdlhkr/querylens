@@ -52,6 +52,26 @@
   margin-bottom: 10px;
 }
 
+/* ─── SQL label row (label + toggle button) ──────────────────────────────── */
+.sql-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.sql-label-row .result-label {
+  margin-bottom: 0;
+}
+
+.sql-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  font-size: 11px;
+}
+
 /* ─── Code block (query result / generated SQL) ───────────────────────────── */
 .code-block {
   background: var(--ink);

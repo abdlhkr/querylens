@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Play, MessageSquare, Code2, AlertTriangle, BarChart2, Table } from 'lucide-react';
+import { Play, MessageSquare, Code2, AlertTriangle, BarChart2, Table, Eye, EyeOff } from 'lucide-react';
 import Editor from '@monaco-editor/react';
 import { devicesApi } from '../../api/devices';
 import type { ChartRecommendResponse, DatabaseConnection, NaturalLanguageQueryResult, QueryResult } from '../../types';
@@ -21,6 +21,7 @@ export default function Query() {
   const [chartView, setChartView] = useState(false);
   const [chartRec, setChartRec] = useState<ChartRecommendResponse | null>(null);
   const [chartLoading, setChartLoading] = useState(false);
+  const [showSql, setShowSql] = useState(true);
 
   useEffect(() => {
     devicesApi.getDatabases()
@@ -173,8 +174,16 @@ export default function Query() {
         (result as NaturalLanguageQueryResult).responseType !== 'unavailable' &&
         (result as NaturalLanguageQueryResult).responseType !== 'general' && (
         <div style={{ marginBottom: '20px' }}>
-          <p className="result-label">{t('app.generated_sql')}</p>
-          <div className="code-block">{result.generatedSql}</div>
+          <div className="sql-label-row">
+            <p className="result-label">{t('app.generated_sql')}</p>
+            <button
+              className="btn btn-sm btn-secondary sql-toggle-btn"
+              onClick={() => setShowSql(v => !v)}
+            >
+              {showSql ? <><EyeOff size={12} /> {t('app.hide_sql')}</> : <><Eye size={12} /> {t('app.show_sql')}</>}
+            </button>
+          </div>
+          {showSql && <div className="code-block">{result.generatedSql}</div>}
         </div>
       )}
 

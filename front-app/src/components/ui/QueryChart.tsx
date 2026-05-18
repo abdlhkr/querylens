@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   AreaChart, Area,
   BarChart, Bar,
@@ -11,12 +12,7 @@ import type { ChartRecommendResponse, ChartType } from '../../types';
 
 const CHART_COLORS = ['#b8932a', '#3a6ea5', '#16a34a', '#dc2626', '#7c3aed', '#0891b2'];
 
-const CHART_TYPE_LABELS: { type: ChartType; label: string }[] = [
-  { type: 'bar',  label: 'Çubuk' },
-  { type: 'line', label: 'Çizgi' },
-  { type: 'area', label: 'Alan'  },
-  { type: 'pie',  label: 'Pasta' },
-];
+const CHART_TYPES: ChartType[] = ['bar', 'line', 'area', 'pie'];
 
 interface QueryChartProps {
   recommendation: ChartRecommendResponse;
@@ -43,6 +39,7 @@ const tooltipStyle = {
 };
 
 export default function QueryChart({ recommendation, data }: QueryChartProps) {
+  const { t } = useTranslation();
   const { chartType, keyField, valueFields } = recommendation;
 
   // Guard against LLM hallucinating column names
@@ -70,14 +67,14 @@ export default function QueryChart({ recommendation, data }: QueryChartProps) {
     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px', flexWrap: 'wrap' }}>
       {/* Chart type toggle */}
       <div style={{ display: 'flex', gap: '4px' }}>
-        {CHART_TYPE_LABELS.map(({ type, label }) => (
+        {CHART_TYPES.map(type => (
           <button
             key={type}
             className={`btn btn-sm ${activeChartType === type ? 'btn-primary' : 'btn-secondary'}`}
             style={{ padding: '4px 10px', fontSize: '12px' }}
             onClick={() => setActiveChartType(type)}
           >
-            {label}
+            {t(`app.chart_${type}`)}
           </button>
         ))}
       </div>
