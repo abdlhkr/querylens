@@ -6,12 +6,13 @@
     "scripts": {
         "start": "node src/index.js",
         "dev": "nodemon src/index.js",
-        "test": "node src/tests/ConnectionTest.js"
+        "test": "node src/tests/ConnectionTest.js",
+        "obfuscate": "javascript-obfuscator src --output dist --exclude src/tests --compact true --string-array true --string-array-encoding rc4 --string-array-rotate true --string-array-shuffle true --identifier-names-generator hexadecimal --rename-globals false --self-defending true --disable-console-output false"
     },
     "dependencies": {
         "axios": "^1.6.7",
         "dotenv": "^16.4.1",
-        "mssql": "^10.0.2",
+        "mssql": "^12.5.4",
         "mysql2": "^3.9.1",
         "pg": "^8.11.3",
         "sql.js": "^1.10.2",
@@ -20,6 +21,7 @@
         "ws": "^8.16.0"
     },
     "devDependencies": {
+        "javascript-obfuscator": "^5.4.2",
         "nodemon": "^3.0.3"
     },
     "keywords": [

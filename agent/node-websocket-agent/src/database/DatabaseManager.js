@@ -4,6 +4,17 @@ const crypto = require('crypto');
 const ConnectionPool = require('./ConnectionPool');
 const logger = require('../utils/logger');
 
+function serializeRows(rows) {
+    if (!rows) return rows;
+    return rows.map(row => {
+        const clean = {};
+        for (const [key, val] of Object.entries(row)) {
+            clean[key] = typeof val === 'bigint' ? val.toString() : val;
+        }
+        return clean;
+    });
+}
+
 /**
  * Manages database connections for the agent.
  * - Stores encrypted passwords locally
@@ -242,7 +253,7 @@ class DatabaseManager {
             } else if (dbInfo.dbType === 'MSSQL') {
                 const queryResult = await client.request().query(query);
                 result = {
-                    rows: queryResult.recordset,
+                    rows: serializeRows(queryResult.recordset),
                     rowCount: queryResult.rowsAffected?.[0] || queryResult.recordset?.length || 0,
                     fields: queryResult.recordset?.columns ? Object.keys(queryResult.recordset.columns) : []
                 };
