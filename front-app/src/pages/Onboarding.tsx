@@ -33,6 +33,7 @@ export default function Onboarding() {
   const [loadingCode, setLoadingCode] = useState(false);
   const [checkingConn, setCheckingConn] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [osTab, setOsTab] = useState<'linux' | 'windows'>('linux');
 
   // Step 3 state
   const [dbForm, setDbForm] = useState<CreateDatabaseRequest>({
@@ -57,12 +58,18 @@ export default function Onboarding() {
     }
   };
 
-  const dockerCommand = registryId
+  const dockerCommandLinux = registryId
     ? `docker run -d -i \\\n  --name querylens-agent \\\n  --restart unless-stopped \\\n  -v querylens-data:/app/data \\\n  -e GATEWAY_WS_URL=wss://querylensio.com \\\n  -e GATEWAY_HTTP_URL=https://querylensio.com \\\n  -e REGISTRY_ID=${registryId} \\\n  querylensio/main-app:latest`
     : '';
 
+  const dockerCommandWindows = registryId
+    ? `docker run -d -i \`\n  --name querylens-agent \`\n  --restart unless-stopped \`\n  -v querylens-data:/app/data \`\n  -e GATEWAY_WS_URL=wss://querylensio.com \`\n  -e GATEWAY_HTTP_URL=https://querylensio.com \`\n  -e REGISTRY_ID=${registryId} \`\n  querylensio/main-app:latest`
+    : '';
+
+  const activeCommand = osTab === 'linux' ? dockerCommandLinux : dockerCommandWindows;
+
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(dockerCommand);
+    await navigator.clipboard.writeText(activeCommand);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -227,12 +234,26 @@ export default function Onboarding() {
               <h2 className="ob-title">{t('onboarding.step2_title')}</h2>
               <p className="ob-desc">{t('onboarding.agent_desc')}</p>
 
+              <div className="os-tab-bar">
+                <button
+                  className={`os-tab ${osTab === 'linux' ? 'os-tab-active' : ''}`}
+                  onClick={() => setOsTab('linux')}
+                >
+                  {t('onboarding.terminal_linux')}
+                </button>
+                <button
+                  className={`os-tab ${osTab === 'windows' ? 'os-tab-active' : ''}`}
+                  onClick={() => setOsTab('windows')}
+                >
+                  {t('onboarding.terminal_windows')}
+                </button>
+              </div>
               <div className="agent-code-box">
                 {loadingCode ? (
                   <div className="spinner" style={{ margin: '0 auto' }} />
                 ) : (
                   <>
-                    <pre className="agent-code-text">{dockerCommand || '—'}</pre>
+                    <pre className="agent-code-text">{activeCommand || '—'}</pre>
                     <button className="btn btn-ghost btn-sm" onClick={handleCopy} disabled={!registryId} style={{ alignSelf: 'flex-start' }}>
                       {copied ? <Check size={14} /> : <Copy size={14} />}
                       {copied ? t('onboarding.copied') : t('onboarding.copy')}

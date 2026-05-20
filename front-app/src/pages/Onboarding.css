@@ -165,6 +165,36 @@
   font-family: var(--font-mono);
 }
 
+/* ─── OS Tab Bar ──────────────────────────────────────────────────────────── */
+.os-tab-bar {
+  display: flex;
+  gap: 4px;
+  margin-bottom: -1px;
+}
+
+.os-tab {
+  padding: 6px 14px;
+  font-size: 12px;
+  font-family: var(--font-mono);
+  background: transparent;
+  border: 1px solid #1a1a1a;
+  border-bottom: none;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  color: var(--muted);
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+}
+
+.os-tab:hover {
+  color: var(--text);
+}
+
+.os-tab-active {
+  background: var(--ink);
+  color: var(--gold-pale);
+  border-color: #1a1a1a;
+}
+
 /* ─── Agent Code Box ──────────────────────────────────────────────────────── */
 .agent-code-box {
   display: flex;
@@ -173,7 +203,7 @@
   gap: 12px;
   background: var(--ink);
   border: 1px solid #1a1a1a;
-  border-radius: var(--radius-md);
+  border-radius: 0 var(--radius-md) var(--radius-md) var(--radius-md);
   padding: 14px 16px;
 }
 

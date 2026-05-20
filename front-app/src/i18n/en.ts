@@ -164,6 +164,8 @@ export const en = {
     valid_30: 'Valid for 30 minutes.',
     copy: 'Copy',
     copied: 'Copied!',
+    terminal_linux: 'Linux / Mac',
+    terminal_windows: 'Windows (PowerShell)',
     refresh_code: 'Refresh Code',
     check_connection: 'Check Connection',
     db_password: 'Database Password',

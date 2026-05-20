@@ -164,6 +164,8 @@ export const tr = {
     valid_30: '30 dakika geçerlidir.',
     copy: 'Kopyala',
     copied: 'Kopyalandı!',
+    terminal_linux: 'Linux / Mac',
+    terminal_windows: 'Windows (PowerShell)',
     refresh_code: 'Kodu Yenile',
     check_connection: 'Bağlantıyı Kontrol Et',
     db_password: 'Veritabanı Şifresi',
