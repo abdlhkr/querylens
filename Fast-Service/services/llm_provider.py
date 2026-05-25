@@ -17,7 +17,7 @@ def get_llm() -> ChatOpenAI:
     if _llm is None:
         try:
             _llm = ChatOpenAI(
-                model="gpt-5.4-mini",
+                model="gpt-5.4",
                 temperature=0
                 )
         except Exception as exc:
