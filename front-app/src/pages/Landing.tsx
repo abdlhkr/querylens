@@ -325,7 +325,7 @@ export default function Landing() {
         </a>
         <div className="footer-links">
           <a href="#">{t('landing.footer_docs')}</a>
-          <a href="#">{t('landing.footer_privacy')}</a>
+          <Link to="/privacy">{t('landing.footer_privacy')}</Link>
           <a href="#">{t('landing.footer_security')}</a>
           <a href="mailto:info@querylensio.com">{t('landing.footer_contact')}</a>
         </div>

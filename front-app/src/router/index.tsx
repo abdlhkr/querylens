@@ -23,6 +23,7 @@ const Dashboard = lazyWithReload(() => import('../pages/app/Dashboard'));
 const Databases = lazyWithReload(() => import('../pages/app/Databases'));
 const Query = lazyWithReload(() => import('../pages/app/Query'));
 const Settings = lazyWithReload(() => import('../pages/app/Settings'));
+const PrivacyPolicy = lazyWithReload(() => import('../pages/PrivacyPolicy'));
 
 const PageLoader = () => (
   <div className="loading-screen">
@@ -75,6 +76,14 @@ const router = createBrowserRouter([
         ),
       },
     ],
+  },
+  {
+    path: '/privacy',
+    element: (
+      <Suspense fallback={<PageLoader />}>
+        <PrivacyPolicy />
+      </Suspense>
+    ),
   },
   {
     path: '/onboarding',
