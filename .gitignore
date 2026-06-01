@@ -53,3 +53,5 @@ pip-delete-this-directory.txt
 .vscode/
 *.iml
 *.swp
+# ... GRAPHİFY 
+.codegraph/
