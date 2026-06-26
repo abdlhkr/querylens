@@ -1,12 +1,14 @@
 import logging
 import logging.config
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 from core.exceptions import InvalidInputError, LLMProviderError, QueryGenerationError
-from routers import chart_router, query_router
+from routers import chart_router, index_router, query_router
 from schemas.response import ApiResponse
+from services import weaviate_service
 
 logging.config.dictConfig({
     "version": 1,
@@ -31,15 +33,34 @@ logging.config.dictConfig({
 
 logger = logging.getLogger(__name__)
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup: Weaviate koleksiyonunu hazırla. Weaviate erişilemese bile servis
+    # ayağa kalksın (sorgu anında tekrar denenir / hata döner).
+    try:
+        weaviate_service.ensure_collection()
+    except Exception:
+        logger.exception("Weaviate koleksiyonu hazırlanamadı (startup)")
+    yield
+    # Shutdown: bağlantıyı temiz kapat.
+    try:
+        weaviate_service.close_client()
+    except Exception:
+        logger.exception("Weaviate bağlantısı kapatılırken hata")
+
+
 app = FastAPI(
     title="Fast-Service",
     description="Doğal dil sorusunu SQL SELECT sorgusuna dönüştüren AI servisi.",
     version="1.0.0",
+    lifespan=lifespan,
 )
 
 # ── Router Kayıtları ──────────────────────────────────────────────────────────
 app.include_router(query_router.router)
 app.include_router(chart_router.router)
+app.include_router(index_router.router)
 
 
 # ── Global Exception Handler'lar ──────────────────────────────────────────────

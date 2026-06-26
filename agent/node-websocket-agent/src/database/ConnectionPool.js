@@ -42,12 +42,23 @@ class ConnectionPool {
             this.pools.set(databaseId, pool);
         }
 
-        // Try to get an available connection
-        if (pool.available.length > 0) {
+        // Try to get a live available connection. Discard any that have been
+        // closed underneath us (e.g. idle cleanup, server-side drop) instead of
+        // handing back a dead client.
+        while (pool.available.length > 0) {
             const conn = pool.available.pop();
-            conn.lastUsed = Date.now();
-            logger.debug('Reusing existing connection', { databaseId });
-            return conn.client;
+            if (this.isConnectionAlive(conn.client, pool.dbType)) {
+                conn.lastUsed = Date.now();
+                logger.debug('Reusing existing connection', { databaseId });
+                return conn.client;
+            }
+            logger.warn('Discarding dead pooled connection', { databaseId });
+            pool.connections = pool.connections.filter(c => c !== conn);
+            try {
+                await this.closeConnection(conn.client, pool.dbType);
+            } catch (e) {
+                // already dead; ignore
+            }
         }
 
         // Create new connection if under limit
@@ -158,7 +169,11 @@ class ConnectionPool {
             },
             connectionTimeout: this.config.acquireTimeoutMs
         };
-        const pool = await sql.connect(config);
+        // Dedicated pool per connection. Using the global sql.connect() singleton
+        // means testConnection's client.close() would close the pool that the
+        // persistent connection pool is reusing → "Connection is closed.".
+        const pool = new sql.ConnectionPool(config);
+        await pool.connect();
         return pool;
     }
 
@@ -230,6 +245,32 @@ class ConnectionPool {
                 }
             }
         }
+    }
+
+    /**
+     * Check whether a pooled client is still usable before reuse.
+     * Conservative: only the drivers we can cheaply probe are checked; others
+     * keep the previous "assume alive" behaviour.
+     */
+    isConnectionAlive(client, dbType) {
+        if (!client) return false;
+        try {
+            if (dbType === 'MSSQL') {
+                // mssql ConnectionPool exposes a `connected` flag
+                return client.connected === true;
+            }
+            if (dbType === 'POSTGRESQL') {
+                // pg Client sets these private flags once the socket is gone
+                return !client._ending && !client._ended;
+            }
+            if (dbType === 'MYSQL') {
+                // mysql2 connection state goes to 'disconnected' when closed
+                return !client.connection || client.connection.state !== 'disconnected';
+            }
+        } catch (e) {
+            return false;
+        }
+        return true;
     }
 
     /**

@@ -20,4 +20,9 @@ public class FastServiceAnalysisResult {
     private String sql;
     private String message;
     private String suggestedQuestion;
+    /**
+     * Schema text fast-service selected from Weaviate for this question.
+     * Reused for the self-heal /fix call so it operates on the same schema.
+     */
+    private String dbScheme;
 }

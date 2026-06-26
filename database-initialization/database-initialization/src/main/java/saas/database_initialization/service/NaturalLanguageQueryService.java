@@ -7,17 +7,13 @@ import saas.database_initialization.client.FastServiceClient;
 import saas.database_initialization.dto.query.FastServiceAnalysisResult;
 import saas.database_initialization.dto.query.NaturalLanguageQueryResponse;
 import saas.database_initialization.entity.DatabaseConnection;
-import saas.database_initialization.entity.IntrospectionResult;
 import saas.database_initialization.enums.ConnectionStatus;
 import saas.database_initialization.exception.BadRequestException;
-import saas.database_initialization.repository.IntrospectionResultRepository;
 import saas.database_initialization.dto.websocket.QueryResultMessage;
 
-import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 /**
  * Orchestrates the natural language → SQL → execution pipeline
@@ -37,7 +33,6 @@ import java.util.stream.Collectors;
 public class NaturalLanguageQueryService {
 
     private final DatabaseConnectionService databaseConnectionService;
-    private final IntrospectionResultRepository introspectionResultRepository;
     private final FastServiceClient fastServiceClient;
     private final DatabaseWebSocketService webSocketService;
 
@@ -77,22 +72,11 @@ public class NaturalLanguageQueryService {
                     .build();
         }
 
-        // 2. Build schema text from stored introspection results
-        List<IntrospectionResult> introspectionResults = introspectionResultRepository.findByDatabaseId(databaseId);
-
-        String dbScheme = introspectionResults.stream()
-                .map(result -> "Schema: " + result.getSchemaName() + "\n" + result.getResultText())
-                .collect(Collectors.joining("\n\n"));
-
-        if (dbScheme.isBlank()) {
-            throw new BadRequestException(
-                    "No schema information found for this database. " +
-                            "Please wait for introspection to complete or re-verify your database.");
-        }
-
-        // 3. Call fast_service analyzer + conditional SQL generation
+        // 2. Call fast_service analyzer; fast-service selects the relevant schema
+        //    from Weaviate (by databaseId) and returns it for reuse in self-heal.
         String dbType = connection.getDbType().name();
-        FastServiceAnalysisResult analysisResult = fastServiceClient.analyzeQuery(dbType, dbScheme, question);
+        FastServiceAnalysisResult analysisResult = fastServiceClient.analyzeQuery(dbType, databaseId, question);
+        String dbScheme = analysisResult.getDbScheme();
 
         if ("unavailable".equals(analysisResult.getType())) {
             return NaturalLanguageQueryResponse.builder()

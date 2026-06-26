@@ -2,13 +2,18 @@ from pydantic import BaseModel, field_validator
 
 
 class QueryRequest(BaseModel):
-    """SQL sorgusu üretmek için gerekli giriş verisi."""
+    """
+    SQL sorgusu üretmek için gerekli giriş verisi.
+
+    Şema artık istekle gelmiyor; fast-service `database_id` ile Weaviate'ten
+    soruya en alakalı tabloları kendisi seçer.
+    """
 
     db_type: str
-    db_scheme: str
+    database_id: str
     question: str
 
-    @field_validator("db_type", "db_scheme", "question")
+    @field_validator("db_type", "database_id", "question")
     @classmethod
     def must_not_be_blank(cls, value: str, info) -> str:
         if not value or not value.strip():

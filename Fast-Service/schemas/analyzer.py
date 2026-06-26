@@ -15,6 +15,9 @@ class SqlQueryResponse(BaseModel):
     type: Literal["sql"] = "sql"
     sql: str
     analysis: AnalyzerOutput
+    # Weaviate'ten seçilip LLM'e verilen şema; çağıran (db-service) self-heal
+    # /fix isteğinde aynı şemayı kullansın diye geri döndürülür.
+    dbScheme: str = ""
 
 
 class UnavailableQueryResponse(BaseModel):

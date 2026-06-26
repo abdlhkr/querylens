@@ -51,9 +51,13 @@ def _normalize_content(content: Any) -> str:
 class QueryService:
     """SQL sorgusu üretmekten sorumlu servis katmanı."""
 
-    def generate_query(self, request: QueryRequest) -> str:
+    def generate_query(self, request: QueryRequest, db_scheme: str) -> str:
         """
-        Verilen istek modeline göre bir SQL SELECT sorgusu üretir.
+        Verilen istek modeli ve seçilmiş şemaya göre bir SQL SELECT sorgusu üretir.
+
+        Args:
+            request: db_type ve question taşıyan istek modeli.
+            db_scheme: Weaviate'ten seçilip oluşturulmuş şema metni.
 
         Returns:
             Üretilen SQL sorgu metni (str)
@@ -67,13 +71,13 @@ class QueryService:
         except LLMProviderError:
             raise
 
-        logger.info(f"LLM'e gönderilecek db_scheme:\n{request.db_scheme}")
+        logger.info(f"LLM'e gönderilecek db_scheme:\n{db_scheme}")
 
         messages = [
             SystemMessage(
                 content=_SYSTEM_PROMPT_TEMPLATE.format(
                     db_type=request.db_type,
-                    db_scheme=request.db_scheme,
+                    db_scheme=db_scheme,
                 )
             ),
             HumanMessage(content=request.question),

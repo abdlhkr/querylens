@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import saas.database_initialization.client.FastServiceClient;
 import saas.database_initialization.dto.database.CreateDatabaseConnectionRequest;
 import saas.database_initialization.dto.database.DatabaseConnectionResponse;
 import saas.database_initialization.dto.database.UpdateDatabaseConnectionRequest;
@@ -15,7 +16,8 @@ import saas.database_initialization.exception.ResourceNotFoundException;
 import saas.database_initialization.repository.CreateDeviceRegistryRepository;
 import saas.database_initialization.repository.DatabaseConnectionRepository;
 import saas.database_initialization.repository.DeviceRepository;
-import saas.database_initialization.repository.IntrospectionResultRepository;
+import saas.database_initialization.repository.ColumnMetadataRepository;
+import saas.database_initialization.repository.TableMetadataRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -32,8 +34,10 @@ public class DatabaseConnectionService {
 
     private final DatabaseConnectionRepository repository;
     private final DeviceRepository deviceRepository;
-    private final IntrospectionResultRepository introspectionResultRepository;
+    private final TableMetadataRepository tableMetadataRepository;
+    private final ColumnMetadataRepository columnMetadataRepository;
     private final CreateDeviceRegistryRepository createDeviceRegistryRepository;
+    private final FastServiceClient fastServiceClient;
 
     /**
      * Create a new database connection (without password)
@@ -151,6 +155,11 @@ public class DatabaseConnectionService {
         DatabaseConnection connection = repository.findByIdAndUserId(connectionId, UUID.fromString(userId))
                 .orElseThrow(() -> new ResourceNotFoundException("Database connection not found"));
 
+        // Clean up structured metadata and the Weaviate index for this database.
+        tableMetadataRepository.deleteByDatabaseId(connectionId);
+        columnMetadataRepository.deleteByDatabaseId(connectionId);
+        fastServiceClient.deleteIndex(connectionId);
+
         repository.delete(connection);
         log.info("Database connection deleted: {}", connectionId);
     }
@@ -234,7 +243,9 @@ public class DatabaseConnectionService {
 
         List<DatabaseConnection> connections = repository.findByUserId(userId);
         for (DatabaseConnection conn : connections) {
-            introspectionResultRepository.deleteByDatabaseId(conn.getId());
+            tableMetadataRepository.deleteByDatabaseId(conn.getId());
+            columnMetadataRepository.deleteByDatabaseId(conn.getId());
+            fastServiceClient.deleteIndex(conn.getId());
         }
 
         repository.deleteByUserId(userId);

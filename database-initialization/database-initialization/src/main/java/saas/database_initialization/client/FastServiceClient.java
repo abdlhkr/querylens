@@ -5,12 +5,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import saas.database_initialization.dto.query.ChartRecommendResponse;
 import saas.database_initialization.dto.query.FastServiceAnalysisResult;
 import saas.database_initialization.exception.BadRequestException;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * HTTP client for calling the fast_service NL-to-SQL API.
@@ -32,20 +34,22 @@ public class FastServiceClient {
     }
 
     /**
-     * Calls fast_service /query/ which now runs the analyzer before SQL generation.
+     * Calls fast_service /query/ which now selects the relevant schema from Weaviate
+     * (by databaseId) before running the analyzer and SQL generation.
      * Returns a result with type="sql", "unavailable", or "general".
      *
-     * @param dbType   e.g. "POSTGRESQL"
-     * @param dbScheme plain-text schema from introspection results
-     * @param question natural language question from the user
-     * @return {@link FastServiceAnalysisResult} with type and relevant fields populated
+     * @param dbType     e.g. "POSTGRESQL"
+     * @param databaseId target database id (fast_service uses it to retrieve schema)
+     * @param question   natural language question from the user
+     * @return {@link FastServiceAnalysisResult} with type, relevant fields, and the
+     *         selected {@code dbScheme} (for reuse in self-heal /fix)
      */
-    public FastServiceAnalysisResult analyzeQuery(String dbType, String dbScheme, String question) {
+    public FastServiceAnalysisResult analyzeQuery(String dbType, UUID databaseId, String question) {
         log.info("Calling fast_service to analyze question: {}", question);
 
         Map<String, String> requestBody = Map.of(
                 "db_type", dbType,
-                "db_scheme", dbScheme,
+                "database_id", databaseId.toString(),
                 "question", question);
 
         try {
@@ -80,6 +84,7 @@ public class FastServiceClient {
                     .sql((String) data.get("sql"))
                     .message((String) data.get("message"))
                     .suggestedQuestion((String) data.get("suggestedQuestion"))
+                    .dbScheme((String) data.get("dbScheme"))
                     .build();
 
             log.info("fast_service analysis type: {}", type);
@@ -87,9 +92,80 @@ public class FastServiceClient {
 
         } catch (BadRequestException e) {
             throw e;
+        } catch (WebClientResponseException e) {
+            // fast_service returned a 4xx/5xx with a JSON body; surface its real message
+            // instead of an opaque status line.
+            String detail = extractErrorBody(e);
+            log.error("fast_service returned {}: {}", e.getStatusCode(), detail);
+            throw new BadRequestException("fast_service error: " + detail);
         } catch (Exception e) {
             log.error("Failed to call fast_service", e);
             throw new BadRequestException("Failed to reach fast_service: " + e.getMessage());
+        }
+    }
+
+    /** Pull the {@code error} field out of a fast_service error response body. */
+    private String extractErrorBody(WebClientResponseException e) {
+        try {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> body = e.getResponseBodyAs(Map.class);
+            if (body != null && body.get("error") != null) {
+                return body.get("error").toString();
+            }
+        } catch (Exception ignored) {
+            // fall through to the raw body / status
+        }
+        String raw = e.getResponseBodyAsString();
+        return (raw != null && !raw.isBlank()) ? raw : e.getStatusCode().toString();
+    }
+
+    /**
+     * Push structured table metadata to fast_service so it can be (re-)indexed in
+     * Weaviate. Best-effort: failures are logged but not rethrown, so introspection
+     * success is not masked by a transient indexing problem.
+     *
+     * @param databaseId target database id
+     * @param dbType     e.g. "POSTGRESQL"
+     * @param tables     per-table payloads (schema_name, table_name, importance,
+     *                   row_count, column_count, content, schema_text)
+     */
+    public void indexTables(UUID databaseId, String dbType, List<Map<String, Object>> tables) {
+        log.info("Indexing {} tables in fast_service for database {}", tables.size(), databaseId);
+
+        Map<String, Object> requestBody = Map.of(
+                "database_id", databaseId.toString(),
+                "db_type", dbType,
+                "tables", tables);
+
+        try {
+            webClient.post()
+                    .uri("/index/tables")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(requestBody)
+                    .retrieve()
+                    .bodyToMono(Map.class)
+                    .block();
+            log.info("Indexed tables in fast_service for database {}", databaseId);
+        } catch (Exception e) {
+            log.error("Failed to index tables in fast_service for database {}: {}",
+                    databaseId, e.getMessage());
+        }
+    }
+
+    /**
+     * Remove a database's indexed tables from Weaviate. Best-effort: logged, not rethrown.
+     */
+    public void deleteIndex(UUID databaseId) {
+        log.info("Deleting fast_service index for database {}", databaseId);
+        try {
+            webClient.delete()
+                    .uri("/index/{databaseId}", databaseId.toString())
+                    .retrieve()
+                    .bodyToMono(Map.class)
+                    .block();
+        } catch (Exception e) {
+            log.error("Failed to delete fast_service index for database {}: {}",
+                    databaseId, e.getMessage());
         }
     }
 
