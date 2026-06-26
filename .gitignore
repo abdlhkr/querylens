@@ -57,3 +57,4 @@ pip-delete-this-directory.txt
 .codegraph/
 # .. bitirme tezi
 SABLON__Bitirme_Tezi/
+thesis_build/
