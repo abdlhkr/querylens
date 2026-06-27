@@ -56,6 +56,8 @@ Rules:
   to another.
 - Never invent tables or columns. Only include names that appear in the retrieved schema
   above or in a tool result.
+- Tool results omit tables already shown above; a result of "Already in context"
+  means that table is present — do not search for it again.
 - When you are done, respond with ONLY a JSON array of the fully-qualified table names
   ("schema.table") that are required to answer the question. No prose, no markdown.
   Example: ["public.orders", "public.users"]
@@ -70,10 +72,30 @@ def _strip_markdown_fences(text: str) -> str:
     return cleaned.strip()
 
 
-def _blocks_to_text(rows: list[dict]) -> str:
-    """Araç sonucu satırlarını LLM'e verilecek schema_text bloğuna çevirir."""
-    blocks = [r.get("schema_text") for r in rows if r.get("schema_text")]
-    return "\n".join(blocks) if blocks else "No matching tables found."
+def _new_blocks_to_text(rows: list[dict], seen_tables: set[str]) -> str:
+    """
+    Araç sonucu satırlarını schema_text bloğuna çevirir; ancak yalnızca daha önce
+    görülmemiş tabloların bloklarını döndürür (RAG'de zaten gelen ya da önceki bir
+    aramada dönmüş tabloları tekrar LLM context'ine eklemez). Görülenler `seen_tables`
+    set'ine eklenir; zaten bilinenler yalnızca adıyla kısaca bildirilir.
+    """
+    new_blocks, already_known = [], []
+    for r in rows:
+        name = (r.get("table_name") or "").strip()
+        text = r.get("schema_text")
+        if not text:
+            continue
+        key = name.lower()
+        if key in seen_tables:
+            already_known.append(name)
+            continue
+        seen_tables.add(key)
+        new_blocks.append(text)
+    if new_blocks:
+        return "\n".join(new_blocks)
+    if already_known:
+        return "Already in context (no new tables): " + ", ".join(already_known)
+    return "No matching tables found."
 
 
 def _tables_in_scheme(scheme: str) -> list[str]:
@@ -106,18 +128,22 @@ class SchemaCompletionService:
             return rag_scheme
 
     def _run(self, question: str, db_type: str, database_id: str, rag_scheme: str) -> str:
+        # RAG'de zaten gelen tabloların adlarıyla başlat; araç sonuçları bunları
+        # (ve aramalar arası tekrarları) tam blok olarak yeniden döndürmesin.
+        seen_tables = {name.lower() for name in _tables_in_scheme(rag_scheme)}
+
         # database_id'yi closure ile bağla; LLM'in bunu geçmesine gerek kalmaz.
         @tool
         def search_schema_by_table(table_name: str) -> str:
             """Find a database table by its (partial) name and return its schema block."""
             rows = weaviate_service.find_tables_by_name(database_id, table_name)
-            return _blocks_to_text(rows)
+            return _new_blocks_to_text(rows, seen_tables)
 
         @tool
         def search_schema_by_column(column_name: str) -> str:
             """Find database tables that contain a column with this name and return their schema blocks."""
             rows = weaviate_service.find_tables_by_column(database_id, column_name)
-            return _blocks_to_text(rows)
+            return _new_blocks_to_text(rows, seen_tables)
 
         tools = [search_schema_by_table, search_schema_by_column]
         tools_by_name = {t.name: t for t in tools}
