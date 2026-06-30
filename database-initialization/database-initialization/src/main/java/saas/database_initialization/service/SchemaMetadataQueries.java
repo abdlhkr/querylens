@@ -193,6 +193,67 @@ public class SchemaMetadataQueries {
         }
     }
 
+    /**
+     * CHECK-constraint query for a single schema. Returns rows aliased
+     * {@code schema_name, table_name, column_name, check_clause}. {@code column_name}
+     * is the single column a CHECK applies to, or NULL when the CHECK spans multiple
+     * columns (table-level) — and always NULL for MySQL, whose catalog does not map
+     * CHECKs to columns. NOT NULL constraints are excluded (they are not CHECKs).
+     *
+     * <p>Returns {@code null} for dbTypes without CHECK extraction. The caller runs
+     * this best-effort: older MySQL/MariaDB lack {@code information_schema.check_constraints},
+     * so a failure must not abort introspection.
+     */
+    public String checkConstraintQuery(DatabaseType dbType, String schema) {
+        String s = escape(schema);
+        switch (dbType) {
+            case POSTGRESQL:
+                return "SELECT n.nspname AS schema_name, "
+                        + "rel.relname AS table_name, "
+                        + "att.attname AS column_name, "
+                        + "pg_get_constraintdef(con.oid) AS check_clause "
+                        + "FROM pg_constraint con "
+                        + "JOIN pg_class rel ON rel.oid = con.conrelid "
+                        + "JOIN pg_namespace n ON n.oid = rel.relnamespace "
+                        + "LEFT JOIN pg_attribute att "
+                        + "  ON att.attrelid = rel.oid "
+                        + " AND cardinality(con.conkey) = 1 AND att.attnum = con.conkey[1] "
+                        + "WHERE con.contype = 'c' AND n.nspname = '" + s + "'";
+            case MYSQL:
+                // MySQL 8.0.16+; catalog does not map CHECKs to columns -> all table-level.
+                return "SELECT cc.constraint_schema AS schema_name, "
+                        + "tc.table_name AS table_name, "
+                        + "NULL AS column_name, "
+                        + "cc.check_clause AS check_clause "
+                        + "FROM information_schema.check_constraints cc "
+                        + "JOIN information_schema.table_constraints tc "
+                        + "  ON tc.constraint_schema = cc.constraint_schema "
+                        + " AND tc.constraint_name = cc.constraint_name "
+                        + "WHERE cc.constraint_schema = '" + s + "'";
+            case MSSQL:
+                // READ UNCOMMITTED + a short LOCK_TIMEOUT keep this best-effort catalog
+                // read from blocking on schema locks: it returns immediately without
+                // taking shared locks, and fails fast (~5s) instead of the driver's 15s
+                // request timeout if a lock is unavoidable. A failure is caught upstream
+                // and introspection proceeds without CHECK data.
+                return "SET LOCK_TIMEOUT 5000; "
+                        + "SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED; "
+                        + "SELECT s.name AS schema_name, "
+                        + "t.name AS table_name, "
+                        + "col.name AS column_name, "
+                        + "cc.definition AS check_clause "
+                        + "FROM sys.check_constraints cc "
+                        + "JOIN sys.tables t ON t.object_id = cc.parent_object_id "
+                        + "JOIN sys.schemas s ON s.schema_id = t.schema_id "
+                        + "LEFT JOIN sys.columns col "
+                        + "  ON col.object_id = cc.parent_object_id "
+                        + " AND cc.parent_column_id <> 0 AND col.column_id = cc.parent_column_id "
+                        + "WHERE s.name = '" + s + "'";
+            default:
+                return null;
+        }
+    }
+
     /** Per-table approximate row-count query for a single schema. */
     public String rowCountQuery(DatabaseType dbType, String schema) {
         String s = escape(schema);

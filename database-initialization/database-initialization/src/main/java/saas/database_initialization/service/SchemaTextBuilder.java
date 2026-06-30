@@ -72,6 +72,7 @@ public class SchemaTextBuilder {
             appendTableHeader(sb, table);
             appendColumns(sb, columnsByTable
                     .getOrDefault(key(table.getSchemaName(), table.getTableName()), List.of()));
+            appendTableChecks(sb, table);
         }
 
         return sb.toString().stripTrailing();
@@ -87,6 +88,7 @@ public class SchemaTextBuilder {
         sb.append("Schema: ").append(table.getSchemaName()).append("\n");
         appendTableHeader(sb, table);
         appendColumns(sb, cols == null ? List.of() : cols);
+        appendTableChecks(sb, table);
         return sb.toString().stripTrailing();
     }
 
@@ -113,8 +115,24 @@ public class SchemaTextBuilder {
                     if (c.isForeign() && c.getConnectedTo() != null) {
                         sb.append(" FK -> ").append(c.getConnectedTo());
                     }
+                    if (c.getCheckClause() != null && !c.getCheckClause().isBlank()) {
+                        sb.append(" ").append(c.getCheckClause());
+                    }
                     sb.append("\n");
                 });
+    }
+
+    /** Render table-level CHECK clauses (multi-column, or all of MySQL), one per line. */
+    private void appendTableChecks(StringBuilder sb, TableEntity table) {
+        String checks = table.getCheckConstraints();
+        if (checks == null || checks.isBlank()) {
+            return;
+        }
+        for (String line : checks.split("\n")) {
+            if (!line.isBlank()) {
+                sb.append("  ").append(line.strip()).append("\n");
+            }
+        }
     }
 
     private String key(String schema, String table) {

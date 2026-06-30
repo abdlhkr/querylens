@@ -213,9 +213,15 @@ public class DatabaseIntrospectionService {
                 byTable.computeIfAbsent(tableName, k -> new ArrayList<>()).add(column);
             }
 
+            // Best-effort CHECK extraction: enriches column entities in-place and
+            // returns the table-level (multi-column / MySQL) clauses per table.
+            Map<String, List<String>> tableChecks =
+                    fetchCheckConstraints(databaseId, dbType, schemaName, byTable);
+
             List<TableEntity> tables = byTable.entrySet().stream()
                     .map(e -> buildTable(databaseId, schemaName, e.getKey(), e.getValue(),
-                            rowCounts.getOrDefault(e.getKey(), 0L)))
+                            rowCounts.getOrDefault(e.getKey(), 0L),
+                            tableChecks.getOrDefault(e.getKey(), Collections.emptyList())))
                     .collect(Collectors.toList());
 
             columnMetadataRepository.saveAll(columns);
@@ -231,7 +237,7 @@ public class DatabaseIntrospectionService {
 
     /** Aggregate a table's columns into a {@link TableEntity}. */
     private TableEntity buildTable(UUID databaseId, String schemaName, String tableName,
-                                   List<ColumnEntity> cols, long rowCount) {
+                                   List<ColumnEntity> cols, long rowCount, List<String> tableChecks) {
         TableEntity table = new TableEntity();
         table.setDatabaseId(databaseId);
         table.setSchemaName(schemaName);
@@ -252,7 +258,71 @@ public class DatabaseIntrospectionService {
                 .collect(Collectors.joining("; "));
         table.setForeignRelations(foreignRelations.isBlank() ? null : foreignRelations);
 
+        table.setCheckConstraints(tableChecks.isEmpty() ? null : String.join("\n", tableChecks));
+
         return table;
+    }
+
+    /**
+     * Best-effort CHECK-constraint extraction for one schema. Single-column CHECKs are
+     * appended onto their {@link ColumnEntity} (via {@code byTable}); multi-column /
+     * MySQL CHECKs are returned as {@code tableName -> clauses}. Any failure (e.g. older
+     * MySQL/MariaDB lacking {@code information_schema.check_constraints}) is logged and
+     * yields an empty map so introspection continues without CHECK data.
+     */
+    private Map<String, List<String>> fetchCheckConstraints(UUID databaseId, DatabaseType dbType,
+                                                            String schemaName,
+                                                            Map<String, List<ColumnEntity>> byTable) {
+        Map<String, List<String>> tableChecks = new java.util.HashMap<>();
+        String query = metadataQueries.checkConstraintQuery(dbType, schemaName);
+        if (query == null) {
+            return tableChecks;
+        }
+        try {
+            List<Map<String, Object>> rows = runQuery(databaseId, query);
+            for (Map<String, Object> row : rows) {
+                String tableName = str(row, "table_name");
+                String clause = normalizeCheck(str(row, "check_clause"));
+                if (tableName == null || clause == null) {
+                    continue;
+                }
+                String columnName = str(row, "column_name");
+
+                ColumnEntity target = null;
+                if (columnName != null) {
+                    for (ColumnEntity c : byTable.getOrDefault(tableName, Collections.emptyList())) {
+                        if (columnName.equals(c.getColumnName())) {
+                            target = c;
+                            break;
+                        }
+                    }
+                }
+
+                if (target != null) {
+                    target.setCheckClause(target.getCheckClause() == null
+                            ? clause
+                            : target.getCheckClause() + " " + clause);
+                } else {
+                    tableChecks.computeIfAbsent(tableName, k -> new ArrayList<>()).add(clause);
+                }
+            }
+        } catch (Exception e) {
+            log.warn("CHECK-constraint extraction skipped for database {}, schema {} (continuing): {}",
+                    databaseId, schemaName, e.getMessage());
+        }
+        return tableChecks;
+    }
+
+    /** Trim a raw CHECK clause and ensure it carries the {@code CHECK } prefix; null if blank. */
+    private String normalizeCheck(String clause) {
+        if (clause == null) {
+            return null;
+        }
+        String trimmed = clause.trim();
+        if (trimmed.isEmpty()) {
+            return null;
+        }
+        return trimmed.regionMatches(true, 0, "CHECK", 0, 5) ? trimmed : "CHECK " + trimmed;
     }
 
     /** Run the row-count query and return a {@code tableName -> rowCount} map. */

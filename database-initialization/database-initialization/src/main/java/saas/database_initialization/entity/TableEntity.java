@@ -64,6 +64,10 @@ public class TableEntity {
     @Column(name = "table_columns", columnDefinition = "TEXT")
     private String columns;
 
+    /** Table-level CHECK clauses (multi-column, or all of MySQL), one per line; null when none. */
+    @Column(name = "check_constraints", columnDefinition = "TEXT")
+    private String checkConstraints;
+
     @Column(name = "executed_at", nullable = false)
     private LocalDateTime executedAt;
 

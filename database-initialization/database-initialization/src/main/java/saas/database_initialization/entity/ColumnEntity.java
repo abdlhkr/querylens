@@ -50,4 +50,8 @@ public class ColumnEntity {
 
     @Column(name = "ordinal_position")
     private Integer ordinalPosition;
+
+    /** Single-column CHECK clause(s), normalized to "CHECK (...)" form; null when none. */
+    @Column(name = "check_clause", columnDefinition = "TEXT")
+    private String checkClause;
 }

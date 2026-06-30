@@ -29,6 +29,7 @@ STRICT RULES:
 9. DO NOT include code fences.
 10. Make sure to provide an alias for each selected column in the same language as the user's question.
 11. DO NOT include any text before or after the query.
+12. A "CHECK (...)" annotation in the schema lists the values/range a column is allowed to hold; use it to pick correct filter values (e.g. exact enum strings) instead of guessing.
 Output format:
 SELECT ...;
 
