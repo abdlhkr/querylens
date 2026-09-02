@@ -1,0 +1,24 @@
+# Lokal gelistirme icin:  cp docker-compose.override.yml.example docker-compose.override.yml
+#
+# docker-compose.yml prod ayarlarini tutar (HTTPS cookie, gercek domain).
+# Compose bu override dosyasini varsa OTOMATIK yukler ve localhost'a gore ezer;
+# ayrica calistirmak icin ekstra bir bayrak gerekmez.
+#
+# Parolalar burada DEGIL, .env dosyasinda tutulur (bkz. .env.example).
+
+services:
+  front-app:
+    build:
+      args:
+        VITE_API_URL: http://localhost:8080
+
+  auth-service:
+    environment:
+      COOKIE_SECURE: "false"
+      ALLOWED_ORIGINS: http://localhost:5173,http://localhost:3000
+      FRONTEND_REDIRECT_URL: http://localhost:3000/app
+      OAUTH2_REDIRECT_URI: http://localhost:8080/login/oauth2/code/google
+
+  gateway-service:
+    environment:
+      ALLOWED_ORIGINS: http://localhost:3000,http://localhost:5173

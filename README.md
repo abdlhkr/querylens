@@ -133,24 +133,33 @@ Veri asla platformun veritabanında saklanmaz — sorgu kullanıcının kendi ma
 ### 1. Tüm stack — tek komut
 
 ```bash
-git clone <repo-url> && cd Start
-# repo kökünde .env oluştur (aşağıdaki değişkenlerle)
-docker compose up --build
+git clone https://github.com/abdlhkr/querylens.git && cd querylens
+
+# 1) Sırlar — .env oluştur ve doldur
+cp .env.example .env
+
+# 2) Lokal ayarlar — cookie/CORS/OAuth redirect'i localhost'a çevirir
+cp docker-compose.override.yml.example docker-compose.override.yml
+
+# 3) Ayağa kaldır
+docker compose up -d --build
 ```
 
-`.env`:
+`.env` içeriği (`.env.example` ile birebir aynı anahtarlar):
 
 ```bash
-OPENAI_API_KEY=sk-...
-JWT_SECRET=<auth ve gateway için AYNI secret>
-DB_PASSWORD=123456
-GOOGLE_CLIENT_ID=...
-GOOGLE_CLIENT_SECRET=...
-MAIL_USERNAME=...
-MAIL_PASSWORD=...
+DB_PASSWORD=           # tüm Postgres instance'ları için
+JWT_SECRET=            # auth ve gateway'de AYNI olmalı — openssl rand -base64 64
+GOOGLE_CLIENT_ID=      # Google Cloud Console > Credentials > OAuth 2.0 Client IDs
+GOOGLE_CLIENT_SECRET=
+OPENAI_API_KEY=        # platform.openai.com > API keys
+MAIL_USERNAME=         # Gmail SMTP
+MAIL_PASSWORD=         # App Password (myaccount.google.com/apppasswords)
 ```
 
-> `docker-compose.override.yml` otomatik yüklenir ve lokal geliştirme için CORS / cookie / OAuth redirect ayarlarını `localhost`'a çevirir.
+> **Override dosyası neden gerekli?** `docker-compose.yml` prod ayarlarını tutar — HTTPS cookie (`COOKIE_SECURE=true`) ve gerçek domain üzerinden CORS. Override kopyalanmazsa servisler ayağa kalkar ama **localhost'ta login çalışmaz**. Compose bu dosyayı varsa otomatik yükler, ekstra bayrak gerekmez.
+>
+> `.env`'de eksik değişken varsa compose sessizce zayıf bir varsayılana düşmek yerine net bir hatayla durur.
 
 Arayüz: **http://localhost:3000** · API: **http://localhost:8080**
 
