@@ -194,3 +194,123 @@ cd front-app && npm install && npm run dev     # :5173
 - JWT doğrulaması yalnızca gateway'de yapılır; downstream servisler yalnızca özel ağ içinden erişilebilir olmalıdır.
 - LLM çıktısı prompt seviyesinde `SELECT`-only'ye kısıtlanır; DDL/DML üretimi reddedilir.
 - Veritabanı kimlik bilgileri platforma değil, agent'ın çalıştığı makineye şifreli olarak yazılır.
+
+---
+
+## Lokalde Çalıştırma ve Uçtan Uca Kullanım
+
+Aşağıdaki adımlar, boş bir makinede projeyi ayağa kaldırıp ilk doğal dil sorgunu çalıştırmana kadar gider.
+
+### Gereksinimler
+
+| | |
+|---|---|
+| Docker + Docker Compose | tüm backend, frontend ve altyapı |
+| Node.js 20+ | agent'ı kendi makinende çalıştırmak için |
+| OpenAI API anahtarı | SQL üretimi ve RAG vektörleme |
+| Bir veritabanı | sorgulayacağın kendi PostgreSQL / MySQL / MSSQL veritabanın |
+| Gmail App Password | kayıt/giriş OTP kodları e-posta ile gidiyor |
+
+### 1 · Stack'i ayağa kaldır
+
+```bash
+git clone https://github.com/abdlhkr/querylens.git && cd querylens
+cp .env.example .env                                              # doldur
+cp docker-compose.override.yml.example docker-compose.override.yml
+docker compose up -d --build
+```
+
+İlk build Maven ve npm bağımlılıklarını indirdiği için birkaç dakika sürer. Durumu kontrol et:
+
+```bash
+docker compose ps          # 11 servisin de "running" olması beklenir
+docker compose logs -f gateway-service
+```
+
+Ayağa kalktığında:
+
+| Adres | Ne |
+|---|---|
+| http://localhost:3000 | arayüz |
+| http://localhost:8080 | API gateway |
+| http://localhost:8000/docs | fast-service (FastAPI Swagger) |
+| http://localhost:8085 | Weaviate |
+| localhost:5433 / 5434 / 5435 | auth / user / device veritabanları |
+
+### 2 · Hesap oluştur
+
+http://localhost:3000 → **Kayıt ol**. Kayıt iki adımlı: e-posta + parola girersin, sisteme 6 haneli bir kod gelir, onu doğrularsın.
+
+> Kod e-posta ile gönderildiği için `.env`'deki `MAIL_USERNAME` / `MAIL_PASSWORD` dolu olmalı. Kod gelmezse: `docker compose logs auth-service | grep -i mail`
+
+### 3 · Agent'ı kendi makinende başlat
+
+Kayıttan sonra onboarding ekranı sana bir **registry ID** verir (arayüz: Ayarlar → Yeni Cihaz Bağla). Bu ID agent'ın WebSocket kimlik bilgisidir — kimseyle paylaşma.
+
+```bash
+cd agent/node-websocket-agent
+npm install
+```
+
+`.env` dosyası oluştur:
+
+```bash
+GATEWAY_HTTP_URL=http://localhost:8080
+GATEWAY_WS_URL=ws://localhost:8080
+REGISTRY_ID=<onboarding ekranından aldığın UUID>
+LOG_LEVEL=info
+```
+
+```bash
+npm start
+```
+
+Bağlantı kurulduğunda logda `Device ID kaydedildi` ve WebSocket bağlantı satırlarını görürsün. Agent ilk açılışta:
+- `.agent_key` — rastgele AES-256 anahtarı üretir (yerel, asla dışarı çıkmaz)
+- `.device_id` — sunucunun atadığı cihaz kimliğini önbelleğe alır
+
+Her ikisi de `.gitignore`'da. Cihazı sıfırdan bağlamak istersen bu iki dosyayı silip yeniden başlat.
+
+### 4 · Veritabanını bağla
+
+Arayüzde **Veritabanları → Yeni Bağlantı**: host, port, veritabanı adı, kullanıcı, parola, tip (`POSTGRESQL` / `MYSQL` / `MSSQL` / `ORACLE`).
+
+Ne olur: db-service bağlantı bilgisini WebSocket ile agent'a iletir → agent **kendi makinende** bağlanmayı dener → sonucu geri gönderir. Bağlantı durumu `PENDING` → `VERIFIED` olur. Parola agent'ta AES-256-GCM ile şifrelenip yerel diske yazılır, platformun veritabanına hiç yazılmaz.
+
+> Veritabanın agent ile aynı makinedeyse host olarak `localhost` yaz. Docker içindeki bir DB'ye bağlanıyorsan host makinenin IP'sini kullan.
+
+Doğrulama sonrası şema introspection'ı çalışır ve tablo metadata'sı Weaviate'e indekslenir — RAG bu indeksi kullanır.
+
+### 5 · Doğal dille sorgula
+
+**Sorgu** sekmesinde sorunu yaz (Türkçe veya İngilizce), örneğin *"geçen ay en çok sipariş veren 10 müşteri"*. Akış:
+
+```
+soru → gateway → db-service → fast-service
+                                 ├─ RAG: Weaviate'ten ilgili tabloları bul
+                                 └─ LLM: sadece SELECT üreten SQL
+     → db-service → WebSocket → agent → SENİN veritabanın
+     → sonuç → arayüz (tablo + otomatik grafik önerisi)
+```
+
+Üretilen SQL arayüzde görünür, dilersen elle düzenleyip tekrar çalıştırabilirsin. LLM prompt seviyesinde `SELECT` dışına çıkamaz; DDL/DML üretmez.
+
+### Sık karşılaşılan sorunlar
+
+| Belirti | Sebep / çözüm |
+|---|---|
+| `DB_PASSWORD .env dosyasinda tanimli olmali` | `.env` eksik veya boş. `.env.example`'ı kopyalayıp doldur. |
+| Giriş yapılıyor ama oturum açılmıyor | `docker-compose.override.yml` kopyalanmamış → cookie `Secure` işaretiyle geliyor ve HTTP'de tarayıcı saklamıyor. |
+| OTP kodu gelmiyor | `MAIL_USERNAME` / `MAIL_PASSWORD` boş ya da Gmail App Password değil. |
+| Sorgu `AGENT_DISCONNECTED` dönüyor | Agent kapalı veya WebSocket düşmüş. `npm start` çalışıyor mu, `agent/node-websocket-agent/logs/agent.log` ne diyor? |
+| Bağlantı `FAILED` kalıyor | Agent DB'ye erişemiyor: host/port yanlış, DB uzaktan bağlantıya kapalı, ya da kullanıcı yetkisiz. |
+| Sorgu üretimi hata veriyor | `OPENAI_API_KEY` geçersiz ya da kredisi bitmiş: `docker compose logs fast-service` |
+
+Faydalı komutlar:
+
+```bash
+docker compose logs -f <servis>      # canlı log
+docker compose restart <servis>      # tek servis yeniden başlat
+docker compose down                  # durdur (veriler kalır)
+docker compose down -v               # durdur + tüm veritabanı volume'lerini sil
+```
