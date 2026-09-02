@@ -42,18 +42,40 @@ class DatabaseManager {
 
         if (fs.existsSync(keyFile)) {
             const content = fs.readFileSync(keyFile, 'utf-8').trim();
-            if (content.length === 32) {
-                return content;
+            // Current format: 64 hex chars (32 random bytes)
+            if (/^[0-9a-f]{64}$/i.test(content)) {
+                this.restrictPermissions(keyFile);
+                return Buffer.from(content, 'hex');
             }
-            // File exists but empty or corrupted — regenerate
+            // Legacy format: 32 raw chars, derived from the machine name.
+            // Still usable as an AES-256 key, so old credential files stay readable.
+            if (content.length === 32) {
+                this.legacyKeyFormat = true;
+                this.restrictPermissions(keyFile);
+                return Buffer.from(content, 'utf-8');
+            }
             logger.warn('Agent key file invalid, regenerating', { keyFile });
         }
 
-        const machineId = require('os').hostname() + (process.env.USERNAME || 'default');
-        const key = crypto.createHash('sha256').update(machineId + 'agent-salt').digest('hex').substring(0, 32);
-        fs.writeFileSync(keyFile, key, { mode: 0o600 });
+        // Random key — never derived from guessable machine data.
+        const key = crypto.randomBytes(32);
+        fs.writeFileSync(keyFile, key.toString('hex'), { mode: 0o600 });
+        this.restrictPermissions(keyFile);
+        logger.info('Generated new agent encryption key', { keyFile });
 
         return key;
+    }
+
+    /**
+     * Best-effort chmod 600. No-op on filesystems that ignore POSIX modes
+     * (Windows drive mounts), so failures are never fatal.
+     */
+    restrictPermissions(file) {
+        try {
+            fs.chmodSync(file, 0o600);
+        } catch (error) {
+            logger.debug('Could not restrict file permissions', { file, error: error.message });
+        }
     }
 
     /**
@@ -74,6 +96,15 @@ class DatabaseManager {
             }
 
             logger.info('Loaded database credentials', { count: this.databases.size });
+
+            // Re-write old CBC files in the authenticated GCM format.
+            if (this.legacyCiphertext) {
+                this.legacyCiphertext = false;
+                this.saveCredentials();
+                logger.info('Upgraded credential store to AES-256-GCM');
+            } else {
+                this.restrictPermissions(this.credentialsFile);
+            }
         } catch (error) {
             logger.warn('Failed to load credentials', { error: error.message });
         }
@@ -91,6 +122,7 @@ class DatabaseManager {
 
             const encrypted = this.encrypt(JSON.stringify(credentials));
             fs.writeFileSync(this.credentialsFile, encrypted, { mode: 0o600 });
+            this.restrictPermissions(this.credentialsFile);
 
             logger.debug('Saved database credentials');
         } catch (error) {
@@ -99,27 +131,37 @@ class DatabaseManager {
     }
 
     /**
-     * Encrypt data using AES-256
+     * Encrypt with AES-256-GCM.
+     * Format: v2:<iv>:<authTag>:<ciphertext>  (all hex)
+     * GCM authenticates the ciphertext, so tampering is detected on read —
+     * unlike the old CBC format, which was malleable.
      */
     encrypt(text) {
-        const iv = crypto.randomBytes(16);
-        const cipher = crypto.createCipheriv('aes-256-cbc', Buffer.from(this.encryptionKey), iv);
-        let encrypted = cipher.update(text);
-        encrypted = Buffer.concat([encrypted, cipher.final()]);
-        return iv.toString('hex') + ':' + encrypted.toString('hex');
+        const iv = crypto.randomBytes(12);
+        const cipher = crypto.createCipheriv('aes-256-gcm', this.encryptionKey, iv);
+        const encrypted = Buffer.concat([cipher.update(text, 'utf-8'), cipher.final()]);
+        const tag = cipher.getAuthTag();
+        return ['v2', iv.toString('hex'), tag.toString('hex'), encrypted.toString('hex')].join(':');
     }
 
     /**
-     * Decrypt data using AES-256
+     * Decrypt both the current GCM format and the legacy CBC format
+     * (<iv>:<ciphertext>), so existing credential files keep working.
      */
     decrypt(text) {
         const parts = text.split(':');
-        const iv = Buffer.from(parts[0], 'hex');
-        const encryptedText = Buffer.from(parts[1], 'hex');
-        const decipher = crypto.createDecipheriv('aes-256-cbc', Buffer.from(this.encryptionKey), iv);
-        let decrypted = decipher.update(encryptedText);
-        decrypted = Buffer.concat([decrypted, decipher.final()]);
-        return decrypted.toString();
+
+        if (parts[0] === 'v2') {
+            const [, ivHex, tagHex, dataHex] = parts;
+            const decipher = crypto.createDecipheriv('aes-256-gcm', this.encryptionKey, Buffer.from(ivHex, 'hex'));
+            decipher.setAuthTag(Buffer.from(tagHex, 'hex'));
+            return Buffer.concat([decipher.update(Buffer.from(dataHex, 'hex')), decipher.final()]).toString('utf-8');
+        }
+
+        // Legacy AES-256-CBC
+        this.legacyCiphertext = true;
+        const decipher = crypto.createDecipheriv('aes-256-cbc', this.encryptionKey, Buffer.from(parts[0], 'hex'));
+        return Buffer.concat([decipher.update(Buffer.from(parts[1], 'hex')), decipher.final()]).toString('utf-8');
     }
 
     /**

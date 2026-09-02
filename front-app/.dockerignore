@@ -1,0 +1,12 @@
+# Sirlar imaja girmesin
+.env
+.env.*
+!.env.example
+
+# node_modules host'a ozgu native binary icerir (musl/glibc uyusmazligi),
+# imajda "npm ci" ile temiz kurulum yapilir
+node_modules
+dist
+
+.git
+*.log

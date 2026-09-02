@@ -6,7 +6,7 @@ services:
     environment:
       POSTGRES_DB: device_db
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-123456}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD .env dosyasinda tanimli olmali}
     ports:
       - "5435:5432"
     volumes:
@@ -20,7 +20,7 @@ services:
     environment:
       POSTGRES_DB: auth_service
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-123456}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD .env dosyasinda tanimli olmali}
     ports:
       - "5433:5432"
     volumes:
@@ -34,7 +34,7 @@ services:
     environment:
       POSTGRES_DB: user_service
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-123456}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD .env dosyasinda tanimli olmali}
     ports:
       - "5434:5432"
     volumes:
@@ -50,7 +50,7 @@ services:
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://device-postgres:5432/device_db
       SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-123456}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD .env dosyasinda tanimli olmali}
       FAST_SERVICE_URL: http://fast-service:8000
       SERVER_PORT: 8083
     ports:
@@ -69,9 +69,9 @@ services:
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://auth-postgres:5432/auth_service
       SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-123456}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD .env dosyasinda tanimli olmali}
       SERVER_PORT: 8081
-      JWT_SECRET: ${JWT_SECRET}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET .env dosyasinda tanimli olmali}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
       MAIL_USERNAME: ${MAIL_USERNAME}
@@ -97,7 +97,7 @@ services:
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://user-postgres:5432/user_service
       SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-123456}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD .env dosyasinda tanimli olmali}
       SERVER_PORT: 8082
     ports:
       - "8082:8082"
@@ -113,7 +113,7 @@ services:
     container_name: gateway-service
     environment:
       SERVER_PORT: 8080
-      JWT_SECRET: ${JWT_SECRET}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET .env dosyasinda tanimli olmali}
       ALLOWED_ORIGINS: https://querylensio.com
     ports:
       - "8080:8080"
@@ -160,7 +160,7 @@ services:
     image: fast-service:latest
     container_name: fast-service
     environment:
-      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:?OPENAI_API_KEY .env dosyasinda tanimli olmali}
       WEAVIATE_HOST: weaviate
       WEAVIATE_HTTP_PORT: "8080"
       WEAVIATE_GRPC_PORT: "50051"

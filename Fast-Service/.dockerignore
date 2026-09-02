@@ -1,0 +1,14 @@
+# Sirlar imaja girmesin
+.env
+.env.*
+!.env.example
+
+# Sanal ortam ve derleme artiklari (imaji sisirir, host'a ozgudur)
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+
+.git
+.idea/
+.vscode/
